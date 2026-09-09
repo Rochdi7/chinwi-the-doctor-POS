@@ -34,9 +34,13 @@ class Article extends Model
             return null;
         }
 
+        // A barcode match wins over a reference match: nothing stops one
+        // article's reference from colliding with another's barcode, and
+        // the scanner is always sending a barcode.
         return static::query()
             ->where('actif', true)
             ->where(fn ($q) => $q->where('code_barre', $code)->orWhere('reference', $code))
+            ->orderByRaw('code_barre = ? desc', [$code])
             ->first();
     }
 }

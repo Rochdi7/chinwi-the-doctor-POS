@@ -250,6 +250,13 @@ return [
         'aucune_ligne' => 'Aucune ligne pour le moment.',
         'tronque' => 'Les :affichees lignes les plus récentes sur :total. Le total ci-dessus porte sur toutes les lignes.',
     ],
+    'scan' => [
+        'label' => 'Scanner un article',
+        'aide' => 'Passez le code-barre devant la douchette. L’article s’ajoute tout seul.',
+        'placeholder' => 'Code-barre ou référence...',
+        'introuvable' => 'Code :code inconnu. Vérifiez l’article.',
+        'stock_zero' => ':article : stock épuisé. La vente continue.',
+    ],
     'vente' => [
         'section' => 'Paiement',
         'encaisse_maintenant' => 'Encaisser maintenant',
