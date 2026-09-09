@@ -108,7 +108,10 @@
         .pos-kbd { position: absolute; inset-inline-end: .75rem; font-size: .65rem; font-weight: 600; color: rgb(var(--gray-400)); border: 1px solid rgb(var(--gray-300)); border-radius: .3rem; padding: .1rem .35rem; pointer-events: none; }
         .dark .pos-kbd { border-color: rgb(var(--gray-600)); }
 
-        .pos-lines { flex: 1 1 auto; min-height: 7rem; overflow-y: auto; }
+        /* Grows with the cart, scrolls once it runs out of room. No min-height:
+           a single line must not leave a blank band under it. */
+        .pos-lines { flex: 0 1 auto; overflow-y: auto; }
+        .pos-lines:empty { display: none; }
         .pos-line { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: .35rem .75rem; align-items: center; padding: .75rem 1.25rem; border-bottom: 1px solid rgb(var(--gray-100)); }
         .dark .pos-line { border-color: rgb(var(--gray-800)); }
         .pos-line:hover { background: rgb(var(--gray-50)); }
