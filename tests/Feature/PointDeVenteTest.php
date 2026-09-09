@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\PointDeVente;
+use App\Livewire\PosGrille;
 use App\Models\Article;
 use App\Models\Caisse;
 use App\Models\Invoice;
@@ -233,10 +234,32 @@ class PointDeVenteTest extends TestCase
         $this->article(['designation' => 'Huile 5L']);
         $this->article(['designation' => 'Sucre 1kg']);
 
-        Livewire::test(PointDeVente::class)
+        // The grid is its own component so cart actions never re-render it.
+        Livewire::test(PosGrille::class)
             ->set('recherche', 'Huile')
             ->assertSee('Huile 5L')
             ->assertDontSee('Sucre 1kg');
+    }
+
+    public function test_a_tile_calls_the_page_not_the_grid(): void
+    {
+        $article = $this->article();
+
+        // One request straight to the page; the grid stays untouched.
+        Livewire::test(PosGrille::class)
+            ->assertSeeHtml('wire:click="$parent.ajouter('.$article->id.')"');
+    }
+
+    public function test_a_cart_action_does_not_re_render_the_grid(): void
+    {
+        $article = $this->article(['designation' => 'Huile 5L']);
+
+        $component = Livewire::test(PointDeVente::class)->call('ajouter', $article->id);
+
+        // Livewire skips unchanged children: the tiles are not in the
+        // response, only the cart is.
+        $this->assertStringNotContainsString('pos-tile-name', $component->html());
+        $this->assertStringContainsString('pos-line-name', $component->html());
     }
 
     public static function localeProvider(): array

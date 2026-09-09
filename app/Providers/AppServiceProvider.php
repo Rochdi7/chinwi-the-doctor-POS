@@ -10,6 +10,8 @@ use App\Models\Payment;
 use App\Observers\AuditObserver;
 use App\Observers\InvoiceItemObserver;
 use App\Observers\PaymentObserver;
+use Filament\Support\Assets\Css;
+use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 
@@ -29,5 +31,12 @@ class AppServiceProvider extends ServiceProvider
         Invoice::observe(AuditObserver::class);
         InvoiceItem::observe(InvoiceItemObserver::class);
         Payment::observe(PaymentObserver::class);
+
+        // The till stylesheet, served static so it is fetched once and never
+        // re-sent inside a Livewire response. mtime busts the browser cache.
+        $pos = public_path('css/pos.css');
+        FilamentAsset::register([
+            Css::make('pos', asset('css/pos.css').'?v='.(is_file($pos) ? filemtime($pos) : 1)),
+        ], package: 'app');
     }
 }

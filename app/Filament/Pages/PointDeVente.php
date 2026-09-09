@@ -4,7 +4,6 @@ namespace App\Filament\Pages;
 
 use App\Filament\Resources\InvoiceResource;
 use App\Models\Article;
-use App\Models\Category;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Payment;
@@ -25,6 +24,9 @@ use Livewire\Attributes\Computed;
  * scan, a click on a product tile, a +/- on a line. "Encaisser" writes the
  * sale, the payment and the drawer movement in one go through the same
  * observers the Ventes form uses, so stock and audit stay consistent.
+ *
+ * The grid itself is App\Livewire\PosGrille, a child component: Livewire
+ * leaves it alone when this page re-renders, so a scan only ships the cart.
  */
 class PointDeVente extends Page
 {
@@ -36,14 +38,7 @@ class PointDeVente extends Page
 
     protected static string $view = 'filament.pages.point-de-vente';
 
-    /** How many tiles the grid shows: enough to browse, few enough to stay quick. */
-    private const GRID_LIMIT = 60;
-
     public string $scan = '';
-
-    public string $recherche = '';
-
-    public ?int $categorie = null;
 
     public ?int $client_id = null;
 
@@ -84,30 +79,7 @@ class PointDeVente extends Page
         ];
     }
 
-    // ---- What the grid and the side panel read -----------------------------
-
-    #[Computed]
-    public function articles(): Collection
-    {
-        $search = trim($this->recherche);
-
-        return Article::query()
-            ->where('actif', true)
-            ->when($this->categorie, fn ($q) => $q->where('category_id', $this->categorie))
-            ->when($search !== '', fn ($q) => $q->where(fn ($q) => $q
-                ->where('designation', 'like', "%{$search}%")
-                ->orWhere('reference', 'like', "%{$search}%")
-                ->orWhere('code_barre', 'like', "%{$search}%")))
-            ->orderBy('designation')
-            ->limit(self::GRID_LIMIT)
-            ->get(['id', 'designation', 'reference', 'prix_vente', 'stock', 'unite', 'category_id']);
-    }
-
-    #[Computed]
-    public function categories(): Collection
-    {
-        return Category::query()->orderBy('nom')->get(['id', 'nom']);
-    }
+    // ---- What the side panel reads (the grid is App\Livewire\PosGrille) ----
 
     #[Computed]
     public function clients(): Collection
