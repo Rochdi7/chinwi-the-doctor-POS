@@ -66,6 +66,8 @@ return [
         'code_barre_generer' => 'Générer un nouveau code',
         'code_barre_non_standard' => 'Ce code n’est pas un code-barres de produit (8 à 14 chiffres). La douchette ne le retrouvera pas : scannez le produit dans ce champ.',
         'code_barre_checksum' => 'Ce code EAN-13 est mal saisi (chiffre de contrôle incorrect). Scannez le produit plutôt que de le taper.',
+        'etiquette' => 'Afficher / imprimer l’étiquette',
+        'etiquette_aide' => 'Imprimez à 100 % (sans « ajuster à la page ») et collez sur le produit. Pour scanner depuis l’écran : luminosité au maximum, sans reflet, à 10–20 cm du lecteur.',
         'section_infos' => 'Informations complémentaires',
         'section_infos_aide' => 'Facultatif : marque et catégorie, pour retrouver l’article plus vite.',
     ],

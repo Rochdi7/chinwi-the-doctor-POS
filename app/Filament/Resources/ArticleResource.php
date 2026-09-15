@@ -87,7 +87,10 @@ class ArticleResource extends Resource
                             return new HtmlString('<span class="text-gray-500">—</span>');
                         }
 
-                        $img = '<img src="'.Barcode::dataUri($code).'" alt="'.e($code).'" style="height:90px">';
+                        // Native pixel size, never scaled by CSS: a resampled
+                        // barcode has grey edges a scanner cannot resolve.
+                        $img = '<img src="'.Barcode::dataUri($code).'" alt="'.e($code).'"
+                                 style="image-rendering: pixelated; max-width: 100%">';
 
                         // Letters or an odd length mean the code was typed,
                         // not scanned: say so before it is saved, because the
@@ -98,7 +101,11 @@ class ArticleResource extends Resource
                                 .e(__('app.article.code_barre_non_standard')).'</div>';
 
                         $link = $record?->exists && $record->code_barre === $code
-                            ? '<a href="'.route('article.barcode', $record).'" target="_blank"
+                            ? '<a href="'.route('article.label', $record).'" target="_blank"
+                                 class="text-primary-600 underline text-sm font-semibold">'
+                                .e(__('app.article.etiquette')).'</a>'
+                              .' &nbsp;·&nbsp; '
+                              .'<a href="'.route('article.barcode', $record).'" target="_blank"
                                  class="text-primary-600 underline text-sm">'
                                 .e(__('app.article.code_barre_telecharger')).'</a>'
                             : '';
@@ -220,12 +227,12 @@ class ArticleResource extends Resource
                     ->preload(),
             ])
             ->actions([
-                Tables\Actions\Action::make('code_barre')
-                    ->label(__('app.article.code_barre_telecharger'))
-                    ->icon('heroicon-o-qr-code')
+                Tables\Actions\Action::make('etiquette')
+                    ->label(__('app.article.etiquette'))
+                    ->icon('heroicon-o-printer')
                     ->color('gray')
                     ->visible(fn (Article $record) => (bool) $record->code_barre)
-                    ->url(fn (Article $record) => route('article.barcode', $record))
+                    ->url(fn (Article $record) => route('article.label', $record))
                     ->openUrlInNewTab(),
                 Tables\Actions\EditAction::make()->label(''),
                 Tables\Actions\DeleteAction::make()->label(''),
