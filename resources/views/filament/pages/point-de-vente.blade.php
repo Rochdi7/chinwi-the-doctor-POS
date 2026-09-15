@@ -32,7 +32,35 @@
         {{-- ============ Cart ============ --}}
         <div class="pos-card pos-cart" wire:loading.class="pos-busy">
             <div class="pos-cart-head">
-                <div class="pos-field scan">
+                {{-- A USB scanner is a keyboard that types ~15 characters in
+                     under 300 ms. Most (Honeywell included) send no Enter
+                     unless programmed to, so Enter cannot be the only trigger:
+                     when a burst of keystrokes arrives at scanner speed and
+                     then stops, submit on its own. A person cannot type eight
+                     characters at under 50 ms each, so hand entry still waits
+                     for Enter. --}}
+                <div
+                    class="pos-field scan"
+                    x-data="{
+                        last: 0,
+                        burst: 0,
+                        timer: null,
+                        key() {
+                            const now = performance.now();
+                            this.burst = (now - this.last) < 50 ? this.burst + 1 : 0;
+                            this.last = now;
+                        },
+                        typed(el) {
+                            clearTimeout(this.timer);
+                            this.timer = setTimeout(() => {
+                                if (this.burst >= 6 && el.value.trim().length >= 8) {
+                                    this.burst = 0;
+                                    $wire.scanner();
+                                }
+                            }, 120);
+                        },
+                    }"
+                >
                     <x-filament::icon icon="heroicon-o-qr-code" />
                     <input
                         type="text"
@@ -40,6 +68,8 @@
                         class="pos-input pos-scan"
                         wire:model="scan"
                         wire:keydown.enter.prevent="scanner"
+                        x-on:keydown="key()"
+                        x-on:input="typed($el)"
                         placeholder="{{ __('app.scan.placeholder') }}"
                         autocomplete="off"
                         autofocus

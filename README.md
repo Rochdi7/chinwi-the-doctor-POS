@@ -158,6 +158,26 @@ Le logo affiché dans le panneau et sur les factures est lu depuis :
 public/assets/chinwi-the-doctor.jpeg
 ```
 
+### ⚡ Performance (caisse)
+
+Le point de vente fait un aller-retour serveur par scan. Deux réglages font
+passer ce temps de ~500 ms à ~150 ms :
+
+1. **OPcache** dans `php.ini` (sous XAMPP : `C:\xampp\php\php.ini`, puis
+   redémarrer Apache) :
+
+   ```ini
+   zend_extension=opcache
+   opcache.enable=1
+   opcache.enable_cli=1
+   ```
+
+2. **Caches de production** après chaque déploiement :
+
+   ```bash
+   php artisan optimize && php artisan filament:optimize
+   ```
+
 ---
 
 ## 📂 Structure

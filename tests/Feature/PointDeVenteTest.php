@@ -55,7 +55,11 @@ class PointDeVenteTest extends TestCase
         Livewire::test(PointDeVente::class)
             ->assertOk()
             ->assertSee('Huile 5L')
-            ->assertSeeHtml('wire:keydown.enter.prevent="scanner"');
+            ->assertSeeHtml('wire:keydown.enter.prevent="scanner"')
+            // A scanner with no Enter suffix must still add the line: the
+            // burst detector submits on its own after scanner-speed typing.
+            ->assertSeeHtml('x-on:input="typed($el)"')
+            ->assertSeeHtml('$wire.scanner()');
 
         $this->get('/admin/pos')->assertOk()->assertSee($article->designation);
     }

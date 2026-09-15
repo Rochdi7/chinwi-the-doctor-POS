@@ -60,6 +60,16 @@ class ArticleResource extends Resource
                     ->default(fn () => Barcode::generate())
                     ->helperText(__('app.article.code_barre_aide'))
                     ->live(onBlur: true)
+                    // A scanner never produces an EAN-13 whose check digit is
+                    // off, so one that is off was mistyped: refuse it rather
+                    // than store a code no scanner will ever match.
+                    ->rule(fn () => function (string $attribute, $value, \Closure $fail) {
+                        $code = trim((string) $value);
+
+                        if (preg_match('/^\d{13}$/', $code) && ! Barcode::isValidEan13($code)) {
+                            $fail(__('app.article.code_barre_checksum'));
+                        }
+                    })
                     ->suffixAction(
                         Forms\Components\Actions\Action::make('regenerer')
                             ->label(__('app.article.code_barre_generer'))
@@ -77,7 +87,15 @@ class ArticleResource extends Resource
                             return new HtmlString('<span class="text-gray-500">—</span>');
                         }
 
-                        $img = '<img src="'.Barcode::dataUri($code).'" alt="'.e($code).'" style="height:60px">';
+                        $img = '<img src="'.Barcode::dataUri($code).'" alt="'.e($code).'" style="height:90px">';
+
+                        // Letters or an odd length mean the code was typed,
+                        // not scanned: say so before it is saved, because the
+                        // scanner will read the packaging, not this string.
+                        $warning = Barcode::isStandardRetail($code)
+                            ? ''
+                            : '<div class="text-sm" style="color: rgb(var(--warning-600))">&#9888; '
+                                .e(__('app.article.code_barre_non_standard')).'</div>';
 
                         $link = $record?->exists && $record->code_barre === $code
                             ? '<a href="'.route('article.barcode', $record).'" target="_blank"
@@ -85,7 +103,7 @@ class ArticleResource extends Resource
                                 .e(__('app.article.code_barre_telecharger')).'</a>'
                             : '';
 
-                        return new HtmlString('<div class="space-y-2">'.$img.'<div>'.$link.'</div></div>');
+                        return new HtmlString('<div class="space-y-2">'.$img.$warning.'<div>'.$link.'</div></div>');
                     }),
                 // Fixed list rather than free text so the same unit is not
                 // spelled three ways across the catalogue. A unit already
