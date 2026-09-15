@@ -55,11 +55,10 @@ class PointDeVenteTest extends TestCase
         Livewire::test(PointDeVente::class)
             ->assertOk()
             ->assertSee('Huile 5L')
-            ->assertSeeHtml('wire:keydown.enter.prevent="scanner"')
-            // A scanner with no Enter suffix must still add the line: the
-            // burst detector submits on its own after scanner-speed typing.
-            ->assertSeeHtml('x-on:input="typed($el)"')
-            ->assertSeeHtml('$wire.scanner()');
+            // Scans are caught page-wide, whichever field has focus, with or
+            // without an Enter suffix from the scanner.
+            ->assertSeeHtml('x-on:keydown.window="key($event)"')
+            ->assertSeeHtml('$wire.scanner(code)');
 
         $this->get('/admin/pos')->assertOk()->assertSee($article->designation);
     }
@@ -80,6 +79,21 @@ class PointDeVenteTest extends TestCase
         $this->assertSame($article->id, (int) $lines[0]['article_id']);
         $this->assertEquals(1, $lines[0]['quantite']);
         $this->assertEquals(12, $lines[0]['prix_unitaire']);
+    }
+
+    public function test_a_code_caught_elsewhere_on_the_page_is_added_too(): void
+    {
+        $article = $this->article(['designation' => 'Sucre 1kg']);
+
+        // The page passes the code it caught in, say, the search box; the
+        // scan box itself stays untouched.
+        $component = Livewire::test(PointDeVente::class)
+            ->set('scan', 'typed-by-hand')
+            ->call('scanner', $article->code_barre)
+            ->assertSet('scan', '')
+            ->assertSee('Sucre 1kg');
+
+        $this->assertCount(1, $component->get('panier'));
     }
 
     public function test_tapping_a_tile_adds_the_article_and_a_repeat_bumps_the_quantity(): void

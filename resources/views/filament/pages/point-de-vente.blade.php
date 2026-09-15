@@ -9,22 +9,74 @@
         $vide = $panier === [];
     @endphp
 
+    {{--
+        A USB scanner is a keyboard: it types the code (~10 ms per character)
+        wherever the cursor happens to be, and most units (Honeywell included)
+        send no Enter unless programmed to. So the page, not one input, listens
+        for scans: a burst of 8+ characters at scanner speed, then silence, is
+        a scan. It is added to the cart whichever field received it, and the
+        characters are removed from that field so a search box or a quantity
+        does not keep the barcode. Typing by hand never comes in that fast,
+        so the scan box still waits for Enter when the cashier keys a code.
+    --}}
     <div
         class="pos"
         x-data="{
+            buffer: '',
+            last: 0,
+            timer: null,
             focusScan() { this.$refs.scan?.focus(); },
+            isScanBox(el) { return el === this.$refs.scan; },
+            typing(el) { return ['INPUT','TEXTAREA','SELECT'].includes(el.tagName) || el.isContentEditable; },
+            key(e) {
+                if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+                if (e.key === 'Enter') {
+                    clearTimeout(this.timer);
+                    if (this.isScanBox(e.target)) {
+                        // Hand-typed code (or a scanner that does send Enter).
+                        e.preventDefault();
+                        this.buffer = '';
+                        this.submit(e.target.value, e.target);
+                    } else if (this.buffer.length >= 8) {
+                        e.preventDefault();
+                        this.submit(this.buffer, e.target);
+                    }
+                    return;
+                }
+
+                if (e.key.length !== 1) return;
+
+                // Nowhere to type: send the keystroke to the scan box.
+                if (!this.typing(e.target)) this.focusScan();
+
+                const now = performance.now();
+                this.buffer = (now - this.last) < 80 ? this.buffer + e.key : e.key;
+                this.last = now;
+
+                clearTimeout(this.timer);
+                this.timer = setTimeout(() => {
+                    if (this.buffer.length >= 8) this.submit(this.buffer, document.activeElement);
+                }, 150);
+            },
+            submit(code, el) {
+                code = (code || '').trim();
+                this.buffer = '';
+                if (code === '') return;
+
+                // Take the barcode back out of whatever field caught it.
+                if (el && this.typing(el) && typeof el.value === 'string') {
+                    el.value = this.isScanBox(el) || el.value.endsWith(code)
+                        ? (this.isScanBox(el) ? '' : el.value.slice(0, -code.length))
+                        : el.value;
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
+                }
+
+                $wire.scanner(code);
+            },
         }"
         x-init="focusScan()"
-        {{-- A scanner types wherever the cursor is. If the cashier last clicked
-             a tile or the page background, route those keystrokes to the scan
-             box instead of losing them. --}}
-        x-on:keydown.window="
-            const t = $event.target;
-            const typing = ['INPUT','TEXTAREA','SELECT'].includes(t.tagName) || t.isContentEditable;
-            if (!typing && !$event.ctrlKey && !$event.metaKey && !$event.altKey && $event.key.length === 1) {
-                focusScan();
-            }
-        "
+        x-on:keydown.window="key($event)"
     >
         {{-- ============ Product grid (own component: not re-rendered by cart actions) ============ --}}
         <livewire:pos-grille />
@@ -32,44 +84,16 @@
         {{-- ============ Cart ============ --}}
         <div class="pos-card pos-cart" wire:loading.class="pos-busy">
             <div class="pos-cart-head">
-                {{-- A USB scanner is a keyboard that types ~15 characters in
-                     under 300 ms. Most (Honeywell included) send no Enter
-                     unless programmed to, so Enter cannot be the only trigger:
-                     when a burst of keystrokes arrives at scanner speed and
-                     then stops, submit on its own. A person cannot type eight
-                     characters at under 50 ms each, so hand entry still waits
-                     for Enter. --}}
-                <div
-                    class="pos-field scan"
-                    x-data="{
-                        last: 0,
-                        burst: 0,
-                        timer: null,
-                        key() {
-                            const now = performance.now();
-                            this.burst = (now - this.last) < 50 ? this.burst + 1 : 0;
-                            this.last = now;
-                        },
-                        typed(el) {
-                            clearTimeout(this.timer);
-                            this.timer = setTimeout(() => {
-                                if (this.burst >= 6 && el.value.trim().length >= 8) {
-                                    this.burst = 0;
-                                    $wire.scanner();
-                                }
-                            }, 120);
-                        },
-                    }"
-                >
+                {{-- Scans are caught page-wide (see the root x-data); this box
+                     is where they land by default and where a code is typed
+                     by hand, followed by Enter. --}}
+                <div class="pos-field scan">
                     <x-filament::icon icon="heroicon-o-qr-code" />
                     <input
                         type="text"
                         x-ref="scan"
                         class="pos-input pos-scan"
                         wire:model="scan"
-                        wire:keydown.enter.prevent="scanner"
-                        x-on:keydown="key()"
-                        x-on:input="typed($el)"
                         placeholder="{{ __('app.scan.placeholder') }}"
                         autocomplete="off"
                         autofocus

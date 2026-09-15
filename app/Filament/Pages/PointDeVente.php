@@ -143,10 +143,13 @@ class PointDeVente extends Page
 
     // ---- Putting things in the cart ----------------------------------------
 
-    /** Enter in the scan box: the scanner just typed the code. */
-    public function scanner(): void
+    /**
+     * A scan. The page passes the code it caught (from whichever field the
+     * scanner typed into); without one, the scan box was submitted by hand.
+     */
+    public function scanner(?string $code = null): void
     {
-        $code = trim($this->scan);
+        $code = trim($code ?? $this->scan);
         // Always clear: the next scan must land in an empty box, hit or miss.
         $this->scan = '';
 
