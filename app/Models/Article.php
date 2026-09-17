@@ -28,7 +28,8 @@ class Article extends Model
      */
     public static function findByScan(string $code): ?self
     {
-        $code = trim($code);
+        // Undo an AZERTY layout turning the digits into punctuation.
+        $code = \App\Support\Barcode::normalizeScan($code);
 
         if ($code === '') {
             return null;

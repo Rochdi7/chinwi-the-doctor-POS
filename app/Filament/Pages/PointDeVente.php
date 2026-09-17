@@ -7,6 +7,7 @@ use App\Models\Article;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Support\Barcode;
 use App\Support\Money;
 use App\Support\ScanCart;
 use Filament\Actions\Action;
@@ -149,7 +150,7 @@ class PointDeVente extends Page
      */
     public function scanner(?string $code = null): void
     {
-        $code = trim($code ?? $this->scan);
+        $code = Barcode::normalizeScan($code ?? $this->scan);
         // Always clear: the next scan must land in an empty box, hit or miss.
         $this->scan = '';
 
@@ -164,11 +165,14 @@ class PointDeVente extends Page
                 ->title(__('app.scan.introuvable', ['code' => $code]))
                 ->danger()
                 ->send();
+            // Feeds the ?debug panel on the page.
+            $this->dispatch('pos-scan-result', message: 'code inconnu: '.$code);
 
             return;
         }
 
         $this->mettreAuPanier($article, $code);
+        $this->dispatch('pos-scan-result', message: 'ajouté: '.$article->designation.' ('.$code.')');
     }
 
     /** A tap on a product tile. */

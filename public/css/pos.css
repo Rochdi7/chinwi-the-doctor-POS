@@ -175,3 +175,11 @@ select.pos-input {
 .dark .pos-btn.secondary { border-color: rgb(var(--gray-700)); color: rgb(var(--gray-200)); background: rgb(var(--gray-800)); }
 .pos-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
 .pos-hint { font-size: .72rem; color: rgb(var(--gray-400)); margin-top: .3rem; }
+
+/* ?debug: what the scanner sends, live. */
+.pos-debug {
+    grid-column: 1 / -1; font-family: ui-monospace, monospace; font-size: .75rem; line-height: 1.4;
+    background: #111; color: #9ee49e; border-radius: .6rem; padding: .6rem .8rem; max-height: 14rem; overflow-y: auto;
+    direction: ltr; text-align: left;
+}
+.pos-debug strong { color: #fff; display: block; margin-bottom: .25rem; }

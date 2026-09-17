@@ -25,6 +25,16 @@
             buffer: '',
             last: 0,
             timer: null,
+            // ?debug in the URL shows what the scanner actually sends: each
+            // key with its delay, and every decision. For diagnosing a till
+            // remotely without touching the scanner.
+            debug: new URLSearchParams(location.search).has('debug'),
+            log: [],
+            trace(msg) {
+                if (!this.debug) return;
+                this.log.push(msg);
+                if (this.log.length > 40) this.log.shift();
+            },
             focusScan() { this.$refs.scan?.focus(); },
             isScanBox(el) { return el === this.$refs.scan; },
             typing(el) { return ['INPUT','TEXTAREA','SELECT'].includes(el.tagName) || el.isContentEditable; },
@@ -33,6 +43,7 @@
 
                 if (e.key === 'Enter') {
                     clearTimeout(this.timer);
+                    this.trace('Enter in ' + (e.target.tagName || '?') + ' buffer=' + JSON.stringify(this.buffer));
                     if (this.isScanBox(e.target)) {
                         // Hand-typed code (or a scanner that does send Enter).
                         e.preventDefault();
@@ -51,18 +62,25 @@
                 if (!this.typing(e.target)) this.focusScan();
 
                 const now = performance.now();
-                this.buffer = (now - this.last) < 80 ? this.buffer + e.key : e.key;
+                const gap = Math.round(now - this.last);
+                this.buffer = gap < 80 ? this.buffer + e.key : e.key;
                 this.last = now;
+                this.trace('key ' + JSON.stringify(e.key) + ' +' + gap + 'ms in ' + (e.target.tagName || '?') + ' buffer=' + this.buffer.length);
 
                 clearTimeout(this.timer);
                 this.timer = setTimeout(() => {
-                    if (this.buffer.length >= 8) this.submit(this.buffer, document.activeElement);
+                    if (this.buffer.length >= 8) {
+                        this.submit(this.buffer, document.activeElement);
+                    } else {
+                        this.trace('idle, buffer too short (' + this.buffer.length + ') -> not a scan');
+                    }
                 }, 150);
             },
             submit(code, el) {
                 code = (code || '').trim();
                 this.buffer = '';
                 if (code === '') return;
+                this.trace('SCAN -> ' + JSON.stringify(code) + ' (sending to server)');
 
                 // Take the barcode back out of whatever field caught it.
                 if (el && this.typing(el) && typeof el.value === 'string') {
@@ -75,9 +93,14 @@
                 $wire.scanner(code);
             },
         }"
-        x-init="focusScan()"
+        x-init="focusScan(); if (debug) trace('debug on — scan now')"
         x-on:keydown.window="key($event)"
+        x-on:pos-scan-result.window="trace('server: ' + ($event.detail?.message ?? JSON.stringify($event.detail)))"
     >
+        <div class="pos-debug" x-show="debug" x-cloak>
+            <strong>SCAN DEBUG</strong>
+            <template x-for="(line, i) in log" :key="i"><div x-text="line"></div></template>
+        </div>
         {{-- ============ Product grid (own component: not re-rendered by cart actions) ============ --}}
         <livewire:pos-grille />
 

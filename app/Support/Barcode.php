@@ -52,6 +52,33 @@ class Barcode
     }
 
     /**
+     * A USB scanner sends key positions, not characters. On a French
+     * (AZERTY) Windows layout the unshifted digit row is punctuation, so a
+     * scanner left on its US default types `é"'(-è_çà&` for `2345678901`.
+     * Map that back rather than making every shop reprogram its scanner.
+     */
+    private const AZERTY_DIGITS = [
+        '&' => '1', 'é' => '2', '"' => '3', "'" => '4', '(' => '5',
+        '-' => '6', 'è' => '7', '_' => '8', 'ç' => '9', 'à' => '0',
+    ];
+
+    /**
+     * What the scanner actually meant. Only a code made entirely of the
+     * AZERTY digit-row characters is translated: a real reference such as
+     * ART-0001 contains a dash too, and must be left alone.
+     */
+    public static function normalizeScan(string $code): string
+    {
+        $code = trim($code);
+
+        if ($code !== '' && preg_match('/^[&é"\'(\-è_çà]{8,}$/u', $code)) {
+            return strtr($code, self::AZERTY_DIGITS);
+        }
+
+        return $code;
+    }
+
+    /**
      * What a retail scanner expects on a product: EAN-8, UPC-A, EAN-13 or
      * GTIN-14, all digits. Anything else was typed by hand and will never
      * match what the scanner reads off the packaging.
