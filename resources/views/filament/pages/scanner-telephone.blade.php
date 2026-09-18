@@ -9,7 +9,9 @@
         the camera sees the same barcode 30 times a second, and the cashier
         means one product.
     --}}
-    <script src="https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js" defer></script>
+    {{-- Loaded on demand rather than with a <script> tag in the body: a
+         deferred script here runs before Filament's own Alpine bootstrap and
+         leaves its stores undefined (sidebar "isOpen" errors). --}}
 
     <div
         class="scanner"
@@ -25,12 +27,34 @@
             detector: null,
             loop: null,
 
+            /** ZXing is only needed where the browser cannot decode itself. */
+            loadZxing() {
+                if (window.ZXing) return Promise.resolve();
+
+                return new Promise((resolve, reject) => {
+                    const tag = document.createElement('script');
+                    tag.src = 'https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js';
+                    tag.onload = resolve;
+                    tag.onerror = reject;
+                    document.head.appendChild(tag);
+                });
+            },
+
             async start() {
                 this.ok = null;
 
                 if (!window.isSecureContext) {
                     this.say(@js(__('app.scanner.https')), false);
                     return;
+                }
+
+                if (!('BarcodeDetector' in window)) {
+                    try {
+                        await this.loadZxing();
+                    } catch (e) {
+                        this.say(@js(__('app.scanner.indispo')), false);
+                        return;
+                    }
                 }
 
                 try {
@@ -181,9 +205,10 @@
         x-on:beforeunload.window="stop()"
         x-init="
             $el.addEventListener('livewire:navigating', () => stop());
-            // On a phone Filament opens with the sidebar over the page; this
-            // one is held one-handed at the counter, so close it.
-            $store.sidebar?.close?.();
+            // On a phone Filament's sidebar sits over the page; this one is
+            // held one-handed at the counter, so close it once Alpine has
+            // registered its stores.
+            $nextTick(() => { if (Alpine.store('sidebar')?.isOpen) Alpine.store('sidebar').close(); });
         "
     >
         <div class="scanner-card">

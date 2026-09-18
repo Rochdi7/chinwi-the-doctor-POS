@@ -158,6 +158,42 @@ Le logo affiché dans le panneau et sur les factures est lu depuis :
 public/assets/chinwi-the-doctor.jpeg
 ```
 
+### 📱 Scanner avec le téléphone (en local)
+
+Le téléphone peut servir de douchette : page **Vente → Scanner (téléphone)**.
+La caméra exige une adresse **https**, or `php artisan serve` est en http.
+En local, lancez donc les deux commandes (deux terminaux) :
+
+```bash
+php artisan serve --host=127.0.0.1 --port=8000
+php deploy/serve-https.php          # https sur le port 8443
+```
+
+Le second affiche l'adresse à ouvrir sur le téléphone, par exemple
+`https://192.168.100.8:8443/admin/scanner`. Acceptez une fois l'avertissement
+de certificat (certificat auto-signé, développement uniquement). Le téléphone
+doit être sur le **même Wi-Fi** que le PC.
+
+En production, le site est déjà en https : rien à faire.
+
+### 🔌 Scanner USB (Honeywell Genesis 7580g)
+
+Le scanner doit rester en mode **clavier USB** (réglage d'usine) : la caisse lit
+ce qu'il « tape ». Ne pas activer le mode *Serial Emulation / port COM* que
+certains guides demandent pour d'autres logiciels : le scanner biperait et la
+caisse ne recevrait rien.
+
+Le point de vente affiche l'état du scanner (connecté / non connecté / mode
+série / problème de pilote). Il le demande à Windows par PowerShell
+(`Get-PnpDevice`), en arrière-plan, toutes les 10 s environ ; voir
+`App\Support\ScannerUsb`. Cela décrit le PC qui exécute PHP : l'indicateur
+n'apparaît donc que si l'application tourne sur le PC de la caisse (Windows).
+Sur un serveur distant ou sous Linux, rien n'est affiché et le scanner
+fonctionne normalement.
+
+Autre marque de scanner : renseigner son identifiant USB dans `.env`, par
+exemple `SCANNER_USB_VID=VID_05E0` (Zebra/Symbol).
+
 ### ⚡ Performance (caisse)
 
 Le point de vente fait un aller-retour serveur par scan. Deux réglages font

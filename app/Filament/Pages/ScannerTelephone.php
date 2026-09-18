@@ -8,13 +8,18 @@ use App\Support\ScanQueue;
 use Filament\Pages\Page;
 
 /**
- * Turn the cashier's phone into the barcode scanner.
+ * Turn any device with a camera into the barcode scanner: the cashier's
+ * phone, a tablet, a second computer.
  *
- * The phone opens this page, points its camera at the product, and the code
- * is pushed to the till open on the PC (App\Filament\Pages\PointDeVente),
+ * The device opens this page, points its camera at the product, and the code
+ * is pushed to the till open elsewhere (App\Filament\Pages\PointDeVente),
  * which adds it to the cart. No app to install: the decoding is done in the
- * browser by the BarcodeDetector API, with a ZXing fallback for iPhones on
- * older iOS.
+ * browser by the BarcodeDetector API, with a ZXing fallback for iPhones,
+ * which have none.
+ *
+ * Which till receives the scans is decided by the `till` code in the URL —
+ * the till shows it as a QR code — and otherwise by the account in use, so
+ * one person with one account needs no pairing at all.
  */
 class ScannerTelephone extends Page
 {
@@ -25,6 +30,18 @@ class ScannerTelephone extends Page
     protected static ?string $slug = 'scanner';
 
     protected static string $view = 'filament.pages.scanner-telephone';
+
+    /** The till this device feeds. */
+    public string $till = '';
+
+    public function mount(?string $till = null): void
+    {
+        $till = (string) ($till ?? request()->query('till', ''));
+
+        $this->till = ScanQueue::isValid($till)
+            ? $till
+            : ScanQueue::tillFor(auth()->id());
+    }
 
     public static function getNavigationGroup(): ?string
     {
@@ -42,8 +59,8 @@ class ScannerTelephone extends Page
     }
 
     /**
-     * The phone holds this page in one hand at the counter: the sidebar,
-     * open by default on a narrow screen, would cover the camera.
+     * The device holds this page in one hand at the counter, so it is kept
+     * narrow rather than spread across a desktop-width panel.
      */
     public function getMaxContentWidth(): ?string
     {
@@ -51,9 +68,9 @@ class ScannerTelephone extends Page
     }
 
     /**
-     * A code read by the phone camera. Answering with the article's name is
-     * what makes the phone usable on its own: the cashier sees what was
-     * recognised without looking at the PC.
+     * A code read by the camera. Answering with the article's name is what
+     * makes the scanner device usable on its own: the cashier sees what was
+     * recognised without looking at the till.
      *
      * @return array{ok: bool, message: string}
      */
@@ -71,7 +88,7 @@ class ScannerTelephone extends Page
             return ['ok' => false, 'message' => __('app.scan.introuvable', ['code' => $code])];
         }
 
-        ScanQueue::push(auth()->id(), $code);
+        ScanQueue::push($this->till, $code);
 
         return ['ok' => true, 'message' => $article->designation];
     }

@@ -7,6 +7,7 @@
         $nbArticles = array_sum(array_map(fn ($l) => (float) ($l['quantite'] ?? 0), $panier));
         $nbArticles = rtrim(rtrim(number_format($nbArticles, 2, '.', ''), '0'), '.');
         $vide = $panier === [];
+        $usb = $this->scannerUsb();
     @endphp
 
     {{--
@@ -118,6 +119,18 @@
         {{-- ============ Cart ============ --}}
         <div class="pos-card pos-cart" wire:loading.class="pos-busy">
             <div class="pos-cart-head">
+                {{-- What Windows says about the USB scanner (App\Support\ScannerUsb).
+                     Nothing is shown while unknown: a host that cannot be asked
+                     must not look like a till with a broken scanner. --}}
+                @if ($usb['state'] !== 'unknown')
+                    <div class="pos-usb {{ $usb['state'] }}" title="{{ __('app.pos.usb.aide_'.$usb['state']) }}">
+                        <span class="dot"></span>
+                        <span>{{ __('app.pos.usb.'.$usb['state']) }}</span>
+                        @if ($usb['name'])
+                            <span class="name">{{ $usb['name'] }}</span>
+                        @endif
+                    </div>
+                @endif
                 {{-- Scans are caught page-wide (see the root x-data); this box
                      is where they land by default and where a code is typed
                      by hand, followed by Enter. --}}

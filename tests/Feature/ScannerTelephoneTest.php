@@ -12,9 +12,9 @@ use Livewire\Livewire;
 use Tests\TestCase;
 
 /**
- * The phone as the scanner: a code read by its camera has to reach the till
- * open on the PC and land in the cart, without the two pages talking to
- * each other directly.
+ * Another device as the scanner: a code read by its camera has to reach the
+ * till open on the counter and land in the cart, without the two pages
+ * talking to each other directly.
  */
 class ScannerTelephoneTest extends TestCase
 {
@@ -48,6 +48,11 @@ class ScannerTelephoneTest extends TestCase
         ], $attributes));
     }
 
+    private function phone(?string $till = null): ScannerTelephone
+    {
+        return Livewire::test(ScannerTelephone::class, $till ? ['till' => $till] : [])->instance();
+    }
+
     public function test_the_scanner_page_opens(): void
     {
         $this->get('/admin/scanner')
@@ -55,27 +60,29 @@ class ScannerTelephoneTest extends TestCase
             ->assertSee(__('app.scanner.titre'));
     }
 
-    public function test_a_code_read_by_the_phone_is_queued_and_named_back(): void
+    public function test_a_code_read_by_the_camera_is_queued_and_named_back(): void
     {
         $article = $this->article(['designation' => 'Huile 5L']);
 
-        // The page answers with the article so the phone shows what it read.
-        $answer = Livewire::test(ScannerTelephone::class)->instance()->envoyer($article->code_barre);
+        $answer = $this->phone()->envoyer($article->code_barre);
 
         $this->assertTrue($answer['ok']);
         $this->assertSame('Huile 5L', $answer['message']);
-        $this->assertSame([$article->code_barre], ScanQueue::drain($this->user->id));
+        $this->assertSame(
+            [$article->code_barre],
+            ScanQueue::drain(ScanQueue::tillFor($this->user->id)),
+        );
     }
 
     public function test_an_unknown_code_is_refused_and_never_queued(): void
     {
-        $answer = Livewire::test(ScannerTelephone::class)->instance()->envoyer('9999999999999');
+        $answer = $this->phone()->envoyer('9999999999999');
 
         $this->assertFalse($answer['ok']);
-        $this->assertSame([], ScanQueue::drain($this->user->id));
+        $this->assertSame([], ScanQueue::drain(ScanQueue::tillFor($this->user->id)));
     }
 
-    public function test_the_till_picks_up_what_the_phone_scanned(): void
+    public function test_the_till_picks_up_what_the_other_device_scanned(): void
     {
         $lait = $this->article(['designation' => 'Lait 1L']);
         $pain = $this->article(['designation' => 'Pain', 'prix_vente' => 2]);
@@ -83,8 +90,7 @@ class ScannerTelephoneTest extends TestCase
         $till = Livewire::test(PointDeVente::class);
         $this->assertSame([], $till->get('panier'), 'cart starts empty');
 
-        // The phone scans two products.
-        $phone = Livewire::test(ScannerTelephone::class)->instance();
+        $phone = $this->phone();
         $phone->envoyer($lait->code_barre);
         $phone->envoyer($lait->code_barre);
         $phone->envoyer($pain->code_barre);
@@ -102,7 +108,7 @@ class ScannerTelephoneTest extends TestCase
     {
         $article = $this->article();
 
-        Livewire::test(ScannerTelephone::class)->instance()->envoyer($article->code_barre);
+        $this->phone()->envoyer($article->code_barre);
 
         $till = Livewire::test(PointDeVente::class)
             ->call('recupererScans')
@@ -121,7 +127,43 @@ class ScannerTelephoneTest extends TestCase
         $this->assertSame([], $till->get('panier'));
     }
 
-    public function test_each_cashier_has_their_own_queue(): void
+    // ---- Pairing a second device -------------------------------------------
+
+    public function test_a_device_scanning_the_qr_feeds_that_till_even_on_another_account(): void
+    {
+        $article = $this->article(['designation' => 'Café 250g']);
+
+        // The till shows its code; another cashier opens the scanner with it.
+        $till = Livewire::test(PointDeVente::class);
+        $code = $till->instance()->till();
+
+        $cashier = User::create([
+            'name' => 'Caissier',
+            'email' => 'caissier@local.test',
+            'password' => bcrypt('admin1234'),
+        ]);
+
+        $this->actingAs($cashier);
+        $this->phone($code)->envoyer($article->code_barre);
+
+        // Back at the till, the scan arrives although a different account
+        // sent it.
+        $this->actingAs($this->user);
+        $till->call('recupererScans')->assertSee('Café 250g');
+
+        $this->assertCount(1, $till->get('panier'));
+    }
+
+    public function test_the_till_code_survives_a_reload(): void
+    {
+        $first = Livewire::test(PointDeVente::class)->instance()->till();
+        $second = Livewire::test(PointDeVente::class)->instance()->till();
+
+        $this->assertSame($first, $second, 'a reload must not unpair the phone');
+        $this->assertTrue(ScanQueue::isValid($first));
+    }
+
+    public function test_an_unpaired_device_feeds_its_own_till_not_someone_elses(): void
     {
         $article = $this->article();
         $other = User::create([
@@ -130,16 +172,34 @@ class ScannerTelephoneTest extends TestCase
             'password' => bcrypt('admin1234'),
         ]);
 
-        ScanQueue::push($other->id, $article->code_barre);
+        // A second cashier scanning without pairing must not land in this cart.
+        $this->actingAs($other);
+        $this->phone()->envoyer($article->code_barre);
 
-        // This till must not see the other cashier's scan.
+        $this->actingAs($this->user);
         $till = Livewire::test(PointDeVente::class)->call('recupererScans');
 
         $this->assertSame([], $till->get('panier'));
-        $this->assertSame([$article->code_barre], ScanQueue::drain($other->id));
+        $this->assertSame([$article->code_barre], ScanQueue::drain(ScanQueue::tillFor($other->id)));
     }
 
-    public function test_the_till_polls_for_phone_scans(): void
+    public function test_a_forged_till_code_is_ignored(): void
+    {
+        $phone = $this->phone('not-a-real-till');
+
+        // Falls back to this account's own till rather than trusting the URL.
+        $this->assertSame(ScanQueue::tillFor($this->user->id), $phone->till);
+    }
+
+    public function test_the_till_offers_the_pairing_address(): void
+    {
+        $page = Livewire::test(PointDeVente::class)->instance();
+
+        $this->assertStringContainsString('/admin/scanner', $page->scannerUrl());
+        $this->assertStringContainsString('till='.$page->till(), $page->scannerUrl());
+    }
+
+    public function test_the_till_polls_for_scans(): void
     {
         Livewire::test(PointDeVente::class)
             ->assertSeeHtml('$wire.recupererScans()');

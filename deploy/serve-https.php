@@ -46,8 +46,12 @@ $context = stream_context_create([
     ],
 ]);
 
+// Accept plain TCP, then turn TLS on per connection: a non-blocking accept
+// on a tls:// server cannot complete the handshake.
+stream_context_set_option($context, 'ssl', 'verify_peer_name', false);
+
 $server = @stream_socket_server(
-    "tls://0.0.0.0:{$httpsPort}",
+    "tcp://0.0.0.0:{$httpsPort}",
     $errno,
     $error,
     STREAM_SERVER_BIND | STREAM_SERVER_LISTEN,
@@ -114,6 +118,16 @@ function accept($server, string $appHost, int $appPort, array &$pairs): void
     $client = @stream_socket_accept($server, 0);
 
     if (! $client) {
+        return;
+    }
+
+    // The handshake needs a blocking socket; the connection goes
+    // non-blocking once TLS is up.
+    stream_set_blocking($client, true);
+
+    if (@stream_socket_enable_crypto($client, true, STREAM_CRYPTO_METHOD_TLS_SERVER) !== true) {
+        @fclose($client);
+
         return;
     }
 

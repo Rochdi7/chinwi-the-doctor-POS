@@ -176,6 +176,21 @@ select.pos-input {
 .pos-btn:disabled { opacity: .45; cursor: not-allowed; transform: none; box-shadow: none; }
 .pos-hint { font-size: .72rem; color: rgb(var(--gray-400)); margin-top: .3rem; }
 
+/* ---- Pairing another device with this till --------------------------- */
+.pos-pair { text-align: center; }
+.pos-pair-qr { display: flex; justify-content: center; padding: 1rem; background: white; border-radius: .75rem; }
+.pos-pair-qr img, .pos-pair-qr canvas { display: block; }
+.pos-pair-url {
+    margin-top: .85rem; font-family: ui-monospace, monospace; font-size: .75rem; direction: ltr;
+    color: rgb(var(--gray-500)); overflow-wrap: anywhere;
+}
+.pos-pair-copy {
+    margin-top: .75rem; border-radius: .6rem; padding: .6rem 1.2rem; font-weight: 600; font-size: .9rem;
+    border: 1px solid rgb(var(--gray-300)); color: rgb(var(--gray-700)); background: white;
+}
+.pos-pair-copy:hover { background: rgb(var(--gray-50)); }
+.dark .pos-pair-copy { border-color: rgb(var(--gray-700)); color: rgb(var(--gray-200)); background: rgb(var(--gray-800)); }
+
 /* ---- Phone used as the scanner (App\Filament\Pages\ScannerTelephone) --- */
 .scanner { display: flex; justify-content: center; }
 .scanner-card {
@@ -228,3 +243,18 @@ select.pos-input {
     direction: ltr; text-align: left;
 }
 .pos-debug strong { color: #fff; display: block; margin-bottom: .25rem; }
+
+/* USB scanner status (App\Support\ScannerUsb) */
+.pos-usb { display: flex; align-items: center; gap: .5rem; font-size: .75rem; font-weight: 600; padding: .35rem .7rem; border-radius: .5rem; background: rgb(var(--gray-100)); color: rgb(var(--gray-600)); }
+.pos-usb .dot { width: .55rem; height: .55rem; border-radius: 999px; background: rgb(var(--gray-400)); flex: none; }
+.pos-usb .name { margin-inline-start: auto; font-weight: 500; opacity: .75; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pos-usb.connected { background: rgb(var(--success-50)); color: rgb(var(--success-700)); }
+.pos-usb.connected .dot { background: rgb(var(--success-500)); box-shadow: 0 0 0 3px rgba(var(--success-500), .2); }
+.pos-usb.absent, .pos-usb.erreur { background: rgb(var(--danger-50)); color: rgb(var(--danger-700)); }
+.pos-usb.absent .dot, .pos-usb.erreur .dot { background: rgb(var(--danger-500)); }
+.pos-usb.serie { background: rgb(var(--warning-50)); color: rgb(var(--warning-700)); }
+.pos-usb.serie .dot { background: rgb(var(--warning-500)); }
+.dark .pos-usb { background: rgb(var(--gray-800)); color: rgb(var(--gray-300)); }
+.dark .pos-usb.connected { background: rgba(var(--success-500), .12); color: rgb(var(--success-400)); }
+.dark .pos-usb.absent, .dark .pos-usb.erreur { background: rgba(var(--danger-500), .12); color: rgb(var(--danger-400)); }
+.dark .pos-usb.serie { background: rgba(var(--warning-500), .12); color: rgb(var(--warning-400)); }

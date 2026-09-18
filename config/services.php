@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    // The USB barcode scanner the till looks for (App\Support\ScannerUsb).
+    // Honeywell by default; e.g. VID_05E0 for Zebra/Symbol.
+    'scanner_usb' => [
+        'vid' => env('SCANNER_USB_VID', 'VID_0C2E'),
+    ],
+
 ];

@@ -11,6 +11,7 @@ use App\Support\Barcode;
 use App\Support\Money;
 use App\Support\ScanCart;
 use App\Support\ScanQueue;
+use App\Support\ScannerUsb;
 use Filament\Actions\Action;
 use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
@@ -73,12 +74,59 @@ class PointDeVente extends Page
     protected function getHeaderActions(): array
     {
         return [
+            // Pair a phone, a tablet or a second computer with this till by
+            // pointing its camera at the QR code.
+            Action::make('appairer')
+                ->label(__('app.pos.appairer'))
+                ->icon('heroicon-o-qr-code')
+                ->color('gray')
+                ->modalHeading(__('app.pos.appairer_titre'))
+                ->modalDescription(__('app.pos.appairer_aide'))
+                ->modalSubmitAction(false)
+                ->modalCancelActionLabel(__('filament::components/modal.actions.close.label'))
+                ->modalContent(fn () => view('filament.pages.partials.appairer', [
+                    'url' => $this->scannerUrl(),
+                ])),
             Action::make('ventes')
                 ->label(__('app.pos.ventes'))
                 ->icon('heroicon-o-document-text')
                 ->color('gray')
                 ->url(InvoiceResource::getUrl('index')),
         ];
+    }
+
+    // ---- Pairing a scanner device -----------------------------------------
+
+    /** The queue this till listens on; a scanner device joins it by QR. */
+    public function till(): string
+    {
+        return ScanQueue::tillFor(auth()->id());
+    }
+
+    /** The address a phone opens to feed this till. */
+    public function scannerUrl(): string
+    {
+        return ScannerTelephone::getUrl().'?till='.$this->till();
+    }
+
+    // ---- The USB scanner plugged into this till ---------------------------
+
+    public function mount(): void
+    {
+        // Start asking Windows now, so the badge has its answer by the time
+        // the cashier looks at it.
+        ScannerUsb::refresh();
+    }
+
+    /**
+     * Whether Windows sees the USB scanner. Read on every render; the poll in
+     * recupererScans() keeps it fresh, so unplugging shows within seconds.
+     *
+     * @return array{state: string, name: ?string}
+     */
+    public function scannerUsb(): array
+    {
+        return ScannerUsb::status();
     }
 
     // ---- What the side panel reads (the grid is App\Livewire\PosGrille) ----
@@ -183,7 +231,11 @@ class PointDeVente extends Page
      */
     public function recupererScans(): int
     {
-        $codes = ScanQueue::drain(auth()->id());
+        // Rides on this poll rather than its own: returns at once, the answer
+        // lands in a file and the next render picks it up.
+        ScannerUsb::refresh();
+
+        $codes = ScanQueue::drain($this->till());
 
         foreach ($codes as $code) {
             $this->scanner($code);
