@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Support\Barcode;
 use App\Support\Money;
 use App\Support\ScanCart;
+use App\Support\ScanQueue;
 use Filament\Actions\Action;
 use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
@@ -173,6 +174,22 @@ class PointDeVente extends Page
 
         $this->mettreAuPanier($article, $code);
         $this->dispatch('pos-scan-result', message: 'ajouté: '.$article->designation.' ('.$code.')');
+    }
+
+    /**
+     * Codes sent by a phone acting as the scanner. Polled by the page a few
+     * times a second; returns how many were taken so the page can stay quiet
+     * when there is nothing (no re-render, no flicker).
+     */
+    public function recupererScans(): int
+    {
+        $codes = ScanQueue::drain(auth()->id());
+
+        foreach ($codes as $code) {
+            $this->scanner($code);
+        }
+
+        return count($codes);
     }
 
     /** A tap on a product tile. */

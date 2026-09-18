@@ -93,7 +93,18 @@
                 $wire.scanner(code);
             },
         }"
-        x-init="focusScan(); if (debug) trace('debug on — scan now')"
+        {{-- A phone on the Scanner page pushes codes to a short server-side
+             queue; drain it a few times a second so a scan taken on the phone
+             appears in this cart on its own. --}}
+        x-init="
+            focusScan();
+            if (debug) trace('debug on — scan now');
+            setInterval(async () => {
+                if (document.hidden) return;
+                const n = await $wire.recupererScans();
+                if (n) trace('phone: ' + n + ' scan(s)');
+            }, 900);
+        "
         x-on:keydown.window="key($event)"
         x-on:pos-scan-result.window="trace('server: ' + ($event.detail?.message ?? JSON.stringify($event.detail)))"
     >

@@ -298,4 +298,17 @@ return [
         'nouvelle_vente' => 'Nouvelle vente',
         'ventes' => 'Voir les ventes',
     ],
+    'scanner' => [
+        'label' => 'Scanner (téléphone)',
+        'titre' => 'Votre téléphone devient la douchette',
+        'aide' => 'Ouvrez cette page sur le téléphone, laissez la caisse ouverte sur le PC : chaque produit scanné ici s’ajoute au panier.',
+        'demarrer' => 'Démarrer la caméra',
+        'arreter' => 'Arrêter',
+        'pret' => 'Visez le code-barres du produit',
+        'rien' => 'Aucun code lu.',
+        'refus' => 'Caméra refusée. Autorisez la caméra pour ce site dans les réglages du navigateur.',
+        'https' => 'La caméra exige une adresse sécurisée (https).',
+        'indispo' => 'Ce navigateur ne sait pas lire les codes-barres. Utilisez Safari (iPhone) ou Chrome (Android) à jour.',
+        'derniers' => 'Derniers scans',
+    ],
 ];
