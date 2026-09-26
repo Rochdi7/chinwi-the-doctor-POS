@@ -76,7 +76,7 @@ class BackOfficeApiTest extends TestCase
     {
         $defaults = $this->getJson('/api/articles/nouveau')->assertOk()->json();
 
-        $this->assertSame('Unite', $defaults['unite']);
+        $this->assertSame('Piece', $defaults['unite']);
         $this->assertTrue(\App\Support\Barcode::isValidEan13($defaults['code_barre']));
         $this->assertStringStartsWith('2', $defaults['code_barre']);
 
@@ -112,6 +112,28 @@ class BackOfficeApiTest extends TestCase
         $this->getJson("/api/articles?categorie={$cat->id}")->assertJsonCount(1, 'data');
         $this->getJson('/api/articles?stock=rupture')->assertJsonCount(1, 'data')->assertJsonPath('data.0.designation', 'Huile');
         $this->getJson('/api/articles?per_page=5')->assertJsonPath('per_page', 5)->assertJsonPath('total', 2);
+    }
+
+    public function test_a_product_photo_is_stored_replaced_and_removed(): void
+    {
+        \Illuminate\Support\Facades\Storage::fake(Article::IMAGE_DISK);
+        $article = $this->article();
+
+        $this->assertSame('Piece', $this->getJson('/api/articles/nouveau')->json('unite'));
+
+        $first = $this->postJson("/api/articles/{$article->id}/image", ['image' => \Illuminate\Http\UploadedFile::fake()->image('p.png', 200, 200)])
+            ->assertOk()->json();
+        $this->assertNotNull($first['image_url']);
+        \Illuminate\Support\Facades\Storage::disk(Article::IMAGE_DISK)->assertExists($article->fresh()->image);
+
+        $old = $article->fresh()->image;
+        $this->postJson("/api/articles/{$article->id}/image", ['image' => \Illuminate\Http\UploadedFile::fake()->image('q.png', 200, 200)])->assertOk();
+        \Illuminate\Support\Facades\Storage::disk(Article::IMAGE_DISK)->assertMissing($old);
+
+        $this->postJson("/api/articles/{$article->id}/image", ['image' => \Illuminate\Http\UploadedFile::fake()->create('doc.pdf', 10, 'application/pdf')])->assertJsonValidationErrors('image');
+
+        $this->deleteJson("/api/articles/{$article->id}/image")->assertOk()->assertJsonPath('image_url', null);
+        $this->assertNull($article->fresh()->image);
     }
 
     // ---- Categories -------------------------------------------------------------
@@ -275,6 +297,23 @@ class BackOfficeApiTest extends TestCase
         $this->assertMatchesRegularExpression('/\d{2}:\d{2}:\d{2}\.\d{3}$/', $row['occurred_at']);
 
         $this->assertContains('updated', $this->getJson('/api/journal/evenements')->json('data'));
+    }
+
+    public function test_alerts_list_unpaid_sales_and_empty_shelves(): void
+    {
+        $this->article(['designation' => 'Vide', 'stock' => 0]);
+        $this->article(['designation' => 'Presque', 'stock' => 3]);
+        $this->article(['designation' => 'Inactif vide', 'stock' => 0, 'actif' => false]);
+        $this->postJson('/api/ventes', $this->sale(['montant_recu' => 10]));
+        $this->postJson('/api/ventes', $this->sale());
+
+        $this->getJson('/api/alertes')->assertOk()
+            ->assertJsonPath('impayes.count', 1)
+            ->assertJsonPath('impayes.total', 20)
+            ->assertJsonPath('impayes.items.0.reste', 20)
+            ->assertJsonPath('ruptures.count', 1)
+            ->assertJsonPath('ruptures.items.0.designation', 'Vide')
+            ->assertJsonPath('stock_bas.count', 1);
     }
 
     public function test_settings_are_saved_and_logged(): void

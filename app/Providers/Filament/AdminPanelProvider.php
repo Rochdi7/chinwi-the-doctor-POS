@@ -6,6 +6,7 @@ use App\Filament\Widgets\StatsOverview;
 use App\Http\Middleware\SetLocale;
 use App\Models\Setting;
 use App\Support\Locales;
+use Filament\FontProviders\LocalFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -37,7 +38,8 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogoHeight('2.75rem')
             ->favicon(asset('assets/chinwi-the-doctor.jpeg'))
             ->colors(['primary' => Color::Emerald])
-            ->font('Cairo')
+            // Self-hosted so the panel keeps its font offline; Arabic uses Tajawal (UiServiceProvider).
+            ->font('Nunito', url: asset('fonts/nunito.css'), provider: LocalFontProvider::class)
             ->maxContentWidth('full')
             ->sidebarCollapsibleOnDesktop()
             ->navigationGroups([

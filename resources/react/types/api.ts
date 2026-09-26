@@ -49,6 +49,13 @@ export interface UsbStatus {
     aide: string | null;
 }
 
+/** Today at this till (GET /pos/journee). */
+export interface PosJournee {
+    ventes: number;
+    total: number;
+    especes: number;
+}
+
 export interface PosInit {
     categories: Category[];
     clients: ClientOption[];
@@ -67,6 +74,7 @@ export interface Article {
     stock: number;
     unite: string | null;
     unite_label: string;
+    image_url: string | null;
     category_id: number | null;
 }
 
@@ -168,6 +176,7 @@ export interface ArticleRow {
     unite: string | null;
     unite_label: string;
     marque: string | null;
+    image_url: string | null;
     category_id: number | null;
     category: string | null;
     prix_achat: number;
@@ -312,6 +321,12 @@ export interface DashboardDetail {
     total: number;
     count: number;
     rows: Record<string, string | number | null>[];
+}
+
+export interface Alertes {
+    impayes: { count: number; total: number; items: { id: number; numero: string; client: string | null; reste: number; date: string | null }[] };
+    ruptures: { count: number; items: { id: number; designation: string; stock: number }[] };
+    stock_bas: { count: number; items: { id: number; designation: string; stock: number }[] };
 }
 
 export interface Settings {

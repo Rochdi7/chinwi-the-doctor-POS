@@ -11,7 +11,7 @@ import { parseAmount } from '@/lib/format';
 import { Dialog } from '@/components/ui/Dialog';
 import { toast } from '@/components/ui/toast';
 import { DataTable, Pagination, type Column } from '@/components/ui/table';
-import { Badge, DateText, DeleteButton, FilterSelect, ModeBadge, Money, PageHeader, SearchBox, Section, Toolbar } from '@/components/ui/misc';
+import { Badge, DateRange, DateText, DeleteButton, FilterSelect, ModeBadge, Money, PageHeader, SearchBox, Section, Toolbar } from '@/components/ui/misc';
 import { SelectField, TextArea, TextField, fieldErrors } from '@/components/ui/form';
 import type { CaisseRow, JournalRow, Paginated, PaymentMode, PaymentRow, Settings } from '@/types/api';
 
@@ -56,8 +56,7 @@ export function ReglementsPage() {
                 <Toolbar>
                     <SearchBox value={search} onChange={setSearch} />
                     <FilterSelect label={t('payment.mode')} value={params.mode} onChange={(v) => set({ mode: v })} options={[{ value: '', label: `${t('payment.mode')}: ${t('spa.ui.tous')}` }, { value: 'especes', label: t('mode.especes') }, { value: 'tpe', label: t('mode.tpe') }]} />
-                    <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.du')}<input type="date" className="field min-h-10 w-auto" value={params.du} onChange={(e) => set({ du: e.target.value })} /></label>
-                    <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.au')}<input type="date" className="field min-h-10 w-auto" value={params.au} onChange={(e) => set({ au: e.target.value })} /></label>
+                    <DateRange du={params.du} au={params.au} onChange={set} />
                 </Toolbar>
                 <DataTable columns={columns} rows={list.data?.data} rowKey={(p) => p.id} loading={list.isPending} refreshing={list.isFetching && list.isPlaceholderData}
                     onRowClick={(p) => (p.invoice_id ? navigate(`/ventes/${p.invoice_id}`) : setEditing(p))} />
@@ -135,8 +134,7 @@ export function CaissePage() {
             <section className="panel overflow-hidden">
                 <Toolbar>
                     <FilterSelect label={t('caisse.type')} value={params.type} onChange={(v) => set({ type: v })} options={[{ value: '', label: `${t('caisse.type')}: ${t('spa.ui.tous')}` }, { value: 'entree', label: t('caisse.entree') }, { value: 'sortie', label: t('caisse.sortie') }]} />
-                    <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.du')}<input type="date" className="field min-h-10 w-auto" value={params.du} onChange={(e) => set({ du: e.target.value })} /></label>
-                    <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.au')}<input type="date" className="field min-h-10 w-auto" value={params.au} onChange={(e) => set({ au: e.target.value })} /></label>
+                    <DateRange du={params.du} au={params.au} onChange={set} />
                 </Toolbar>
                 <DataTable columns={columns} rows={query.data?.data} rowKey={(m) => m.id} loading={query.isPending} refreshing={query.isFetching && query.isPlaceholderData} />
                 <Pagination page={query.data} onPage={(n) => set({ page: String(n) })} />
@@ -185,8 +183,7 @@ export function JournalPage() {
                 <Toolbar>
                     <SearchBox value={search} onChange={setSearch} />
                     <FilterSelect label={t('log.event')} value={params.event} onChange={(v) => set({ event: v })} options={[{ value: '', label: `${t('log.event')}: ${t('spa.ui.tous')}` }, ...(events.data ?? []).map((e) => ({ value: e, label: eventLabel(e) }))]} />
-                    <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.du')}<input type="date" className="field min-h-10 w-auto" value={params.du} onChange={(e) => set({ du: e.target.value })} /></label>
-                    <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.au')}<input type="date" className="field min-h-10 w-auto" value={params.au} onChange={(e) => set({ au: e.target.value })} /></label>
+                    <DateRange du={params.du} au={params.au} onChange={set} />
                 </Toolbar>
                 <DataTable columns={columns} rows={list.data?.data} rowKey={(l) => l.id} loading={list.isPending} refreshing={list.isFetching && list.isPlaceholderData} onRowClick={setOpen} />
                 <Pagination page={list.data} onPage={(n) => set({ page: String(n) })} />

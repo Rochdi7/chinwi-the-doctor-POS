@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Storage;
 
 class Article extends Model
 {
@@ -16,6 +17,31 @@ class Article extends Model
         'tva' => 'decimal:2',
         'actif' => 'boolean',
     ];
+
+    /** Photos live on the public disk; a replaced or orphaned one is removed. */
+    public const IMAGE_DISK = 'public';
+
+    protected static function booted(): void
+    {
+        static::updated(function (Article $article) {
+            if ($article->wasChanged('image') && $old = $article->getOriginal('image')) {
+                Storage::disk(self::IMAGE_DISK)->delete($old);
+            }
+        });
+
+        static::deleted(function (Article $article) {
+            if ($article->image) {
+                Storage::disk(self::IMAGE_DISK)->delete($article->image);
+            }
+        });
+    }
+
+    public function imageUrl(): ?string
+    {
+        // asset() follows the host the till is opened on; the disk URL
+        // would be pinned to APP_URL (http://localhost).
+        return $this->image ? asset('storage/'.$this->image) : null;
+    }
 
     public function category(): BelongsTo
     {

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Languages } from 'lucide-react';
+import { Combobox } from '@/components/ui/Combobox';
+import { Flag } from '@/components/Flag';
 import { useSession, useSessionActions, useT } from '@/auth/session';
 import { errorMessage } from '@/lib/api';
 import { toast } from '@/components/ui/toast';
@@ -12,28 +13,23 @@ export function LanguageSwitch({ compact = false }: { compact?: boolean }) {
     const [busy, setBusy] = useState(false);
 
     return (
-        <label className="relative inline-flex items-center" title={t('spa.pos.langue')}>
-            <Languages className="pointer-events-none absolute start-2.5 size-4 text-ink-3" />
-            <select
-                className={`field min-h-10 ps-8 text-sm font-semibold ${compact ? 'w-auto' : ''}`}
-                value={locale}
-                disabled={busy}
-                aria-label={t('spa.pos.langue')}
-                onChange={async (e) => {
-                    setBusy(true);
-                    try {
-                        await setLocale(e.target.value);
-                    } catch (error) {
-                        toast.error(errorMessage(error, t));
-                    } finally {
-                        setBusy(false);
-                    }
-                }}
-            >
-                {locales.map((l) => (
-                    <option key={l.code} value={l.code}>{l.label}</option>
-                ))}
-            </select>
-        </label>
+        <Combobox
+            size="sm"
+            className={compact ? 'w-auto' : ''}
+            value={locale}
+            disabled={busy}
+            aria-label={t('spa.pos.langue')}
+            options={locales.map((l) => ({ value: l.code, label: l.label, icon: <Flag locale={l.code} /> }))}
+            onChange={async (code) => {
+                setBusy(true);
+                try {
+                    await setLocale(code);
+                } catch (error) {
+                    toast.error(errorMessage(error, t));
+                } finally {
+                    setBusy(false);
+                }
+            }}
+        />
     );
 }

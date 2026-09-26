@@ -1,4 +1,5 @@
-import { useId, type InputHTMLAttributes, type ReactNode, type SelectHTMLAttributes, type TextareaHTMLAttributes } from 'react';
+import { useId, type InputHTMLAttributes, type ReactNode, type TextareaHTMLAttributes } from 'react';
+import { Combobox } from './Combobox';
 
 interface FieldShellProps {
     label: ReactNode;
@@ -54,24 +55,31 @@ export function TextField({ label, value, onChange, error, hint, suffix, classNa
     );
 }
 
-type SelectProps = Omit<SelectHTMLAttributes<HTMLSelectElement>, 'onChange' | 'value'> & {
+interface SelectProps {
     label: ReactNode;
     value: string | number | null | undefined;
     onChange: (value: string) => void;
     options: { value: string | number; label: string }[];
+    /** With a placeholder the choice can be cleared back to nothing. */
     placeholder?: string;
     error?: string | null;
     hint?: ReactNode;
-};
+    className?: string;
+}
 
-export function SelectField({ label, value, onChange, options, placeholder, error, hint, className, ...rest }: SelectProps) {
+export function SelectField({ label, value, onChange, options, placeholder, error, hint, className }: SelectProps) {
     return (
         <Field label={label} error={error} hint={hint} className={className}>
             {(id) => (
-                <select id={id} className={`field ${error ? 'border-bad' : ''}`} value={value ?? ''} onChange={(e) => onChange(e.target.value)} aria-invalid={!!error} {...rest}>
-                    {placeholder !== undefined && <option value="">{placeholder}</option>}
-                    {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-                </select>
+                <Combobox
+                    id={id}
+                    value={value === null || value === undefined ? '' : String(value)}
+                    onChange={onChange}
+                    options={options.map((o) => ({ value: String(o.value), label: o.label }))}
+                    placeholder={placeholder}
+                    clearable={placeholder !== undefined}
+                    invalid={!!error}
+                />
             )}
         </Field>
     );
@@ -104,6 +112,16 @@ export function Toggle({ label, checked, onChange, hint }: { label: ReactNode; c
             </span>
             <input type="checkbox" className="peer sr-only" checked={checked} onChange={(e) => onChange(e.target.checked)} />
             <span className="relative h-6 w-11 flex-none rounded-full bg-line-strong transition-colors peer-checked:bg-ok peer-focus-visible:ring-3 peer-focus-visible:ring-brand/30 after:absolute after:top-0.5 after:start-0.5 after:size-5 after:rounded-full after:bg-white after:shadow after:transition-transform peer-checked:after:translate-x-5 rtl:peer-checked:after:-translate-x-5" />
+        </label>
+    );
+}
+
+/** A plain checkbox with its label, for a one-off choice (Toggle is for settings). */
+export function Checkbox({ label, checked, onChange }: { label: ReactNode; checked: boolean; onChange: (v: boolean) => void }) {
+    return (
+        <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-2">
+            <input type="checkbox" className="size-4 accent-brand" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+            {label}
         </label>
     );
 }

@@ -23,7 +23,7 @@ class InvoicePdf
      */
     public static function render(Invoice $invoice): array
     {
-        $invoice->loadMissing(['client', 'items']);
+        $invoice->loadMissing(['client', 'items.article', 'payments']);
 
         return self::build(
             frenchView: 'pdf.invoice',

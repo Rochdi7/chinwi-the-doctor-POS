@@ -27,7 +27,7 @@ class DatabaseSeeder extends Seeder
             'societe_ice' => '',
             'societe_rc' => '',
             'devise' => 'DH',
-            'tva_defaut' => '0',
+            'tva_defaut' => '20',
         ];
 
         foreach ($defaults as $key => $value) {

@@ -38,6 +38,7 @@ Route::prefix('api')->name('api.')->group(function () {
 
     Route::middleware('auth')->prefix('pos')->name('pos.')->group(function () {
         Route::get('/init', [PosController::class, 'init'])->name('init');
+        Route::get('/journee', [PosController::class, 'journee'])->name('journee');
         Route::get('/articles', [PosController::class, 'articles'])->name('articles');
         Route::post('/scan', [PosController::class, 'scan'])->name('scan');
         Route::get('/scans', [PosController::class, 'scans'])->name('scans');
@@ -53,6 +54,8 @@ Route::prefix('api')->name('api.')->group(function () {
         Route::get('/articles/nouveau', [ArticleController::class, 'nouveau'])->name('articles.nouveau');
         Route::post('/articles/code-barre', [ArticleController::class, 'codeBarre'])->name('articles.code-barre');
         Route::get('/articles/lookup', [ArticleController::class, 'lookup'])->name('articles.lookup');
+        Route::post('/articles/{article}/image', [ArticleController::class, 'image'])->name('articles.image');
+        Route::delete('/articles/{article}/image', [ArticleController::class, 'destroyImage'])->name('articles.image.destroy');
         Route::apiResource('articles', ArticleController::class);
         Route::apiResource('categories', CategoryController::class)->except('show');
 
@@ -65,6 +68,7 @@ Route::prefix('api')->name('api.')->group(function () {
 
         Route::apiResource('reglements', PaymentController::class)->only(['index', 'show', 'update', 'destroy'])->parameters(['reglements' => 'payment']);
 
+        Route::get('/alertes', [BackOfficeController::class, 'alertes'])->name('alertes');
         Route::get('/caisse', [BackOfficeController::class, 'caisse'])->name('caisse');
         Route::get('/journal', [BackOfficeController::class, 'journal'])->name('journal');
         Route::get('/journal/evenements', [BackOfficeController::class, 'journalEvents'])->name('journal.events');

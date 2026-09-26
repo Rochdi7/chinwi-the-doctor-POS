@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-    LayoutDashboard, ShoppingCart, FileText, Banknote, Smartphone, Package, Tags, Users, Wallet, ScrollText, Settings, LogOut, Menu, X, UserRound,
+    LayoutDashboard, ShoppingCart, FileText, Banknote, Package, Tags, Users, Wallet, ScrollText, Settings, LogOut, Menu, X, UserRound,
 } from 'lucide-react';
 import { useSession, useSessionActions, useT } from '@/auth/session';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { AlertsBell } from '@/components/AlertsBell';
 
 interface Item { to: string; icon: typeof LayoutDashboard; label: string; end?: boolean }
 
@@ -20,7 +21,6 @@ function useNav(): { group: string | null; items: Item[] }[] {
                 { to: '/pos', icon: ShoppingCart, label: t('pos.label') },
                 { to: '/ventes', icon: FileText, label: t('invoice.plural') },
                 { to: '/reglements', icon: Banknote, label: t('payment.plural') },
-                { to: '/scanner', icon: Smartphone, label: t('scanner.label') },
             ],
         },
         {
@@ -50,11 +50,7 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
     return (
         <div className="flex h-full flex-col">
             <div className="flex items-center gap-2.5 border-b border-white/10 px-4 py-3.5">
-                <img src="/assets/chinwi-the-doctor.jpeg" alt="" className="h-9 w-auto rounded-md bg-white object-contain" />
-                <div className="min-w-0 leading-tight">
-                    <p className="truncate text-sm font-extrabold text-white">{societe}</p>
-                    <p className="truncate text-xs text-white/60">{t('spa.pos.gestion')}</p>
-                </div>
+                <img src="/assets/chinwi-the-doctor.jpeg" alt={societe ?? ""} className="h-9 w-auto rounded-md bg-white object-contain" />
             </div>
 
             <nav className="flex-1 space-y-4 overflow-y-auto px-2.5 py-4">
@@ -125,6 +121,7 @@ export default function AppLayout() {
                         {open ? <X /> : <Menu />}
                     </button>
                     <div className="ms-auto flex items-center gap-2">
+                        <AlertsBell />
                         <LanguageSwitch compact />
                         <div className="flex h-10 items-center gap-1 rounded-full border border-line ps-3">
                             <UserRound className="size-4 text-ink-3" />

@@ -9,7 +9,15 @@
 @import 'tailwindcss' source(none);
 @source './';
 
-/* Arabic script, served from the app itself: works with no internet at the till. */
+/* Fonts are served from the app itself: they work with no internet at the till. */
+/* Latin: Nunito, one variable file for every weight. It has no Arabic glyphs. */
+@font-face {
+    font-family: 'Nunito';
+    src: url('../fonts/Nunito-Variable.woff2') format('woff2');
+    font-weight: 200 1000;
+    font-display: swap;
+}
+/* Arabic script. */
 @font-face {
     font-family: 'Tajawal';
     src: url('../fonts/Tajawal-Regular.ttf') format('truetype');
@@ -28,7 +36,7 @@
 @custom-variant short (@media (max-height: 820px));
 
 @theme {
-    --font-sans: 'Segoe UI', system-ui, -apple-system, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    --font-sans: 'Nunito', 'Segoe UI', system-ui, -apple-system, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     --font-arabic: 'Tajawal', 'Segoe UI', system-ui, sans-serif;
 
     --color-canvas: #eef1f5;
@@ -44,6 +52,13 @@
     --color-brand-hover: #1e40af;
     --color-brand-soft: #eef3ff;
     --color-navy: #0f1d3a;
+
+    /* Till chrome: dark teal top bar, warm outline for the active category. */
+    --color-teal: #1c3b3f;
+    --color-teal-deep: #0f2a2d;
+    --color-teal-ink: #dbe9e7;
+    --color-warm: #f59e0b;
+    --color-warm-soft: #fff7ed;
 
     --color-ok: #059669;
     --color-ok-hover: #047857;
@@ -134,12 +149,6 @@ html[dir='rtl'] body { font-family: var(--font-arabic); }
     .field::placeholder { color: var(--color-ink-3); }
     .field:focus { border-color: var(--color-brand); box-shadow: 0 0 0 3px rgb(29 78 216 / 0.2); }
 
-    select.field {
-        appearance: none; cursor: pointer; padding-inline-end: 2.4rem;
-        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%238593a6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.6' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-        background-repeat: no-repeat; background-size: 1.2rem; background-position: right 0.7rem center;
-    }
-    [dir='rtl'] select.field { background-position: left 0.7rem center; }
 
     .kbd {
         display: inline-grid; place-items: center; min-width: 1.5rem; height: 1.35rem; padding-inline: 0.3rem;

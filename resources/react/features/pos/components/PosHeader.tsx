@@ -1,27 +1,19 @@
 import { useEffect, useState, type RefObject } from 'react';
 import { Link } from 'react-router-dom';
-import { ScanBarcode, Smartphone, LayoutDashboard, LogOut, CornerDownLeft, UserRound } from 'lucide-react';
+import { ScanBarcode, LayoutDashboard, LogOut, UserRound, Calculator as CalcIcon, Maximize2, Minimize2 } from 'lucide-react';
 import { useSession, useSessionActions, useT } from '@/auth/session';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
-import type { UsbStatus } from '@/types/api';
+import { AlertsBell } from '@/components/AlertsBell';
+import { formatMoney } from '@/lib/format';
+import type { PosJournee, UsbStatus } from '@/types/api';
 
 interface Props {
     scanBox: RefObject<HTMLInputElement | null>;
     scan: string;
     onScanChange: (value: string) => void;
     usb: UsbStatus | undefined;
-    onPair: () => void;
-}
-
-/** Wall clock, Latin digits like every amount. */
-function Clock() {
-    const [now, setNow] = useState(() => new Date());
-    useEffect(() => {
-        const timer = window.setInterval(() => setNow(new Date()), 15_000);
-        return () => window.clearInterval(timer);
-    }, []);
-
-    return <span className="num">{now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</span>;
+    journee: PosJournee | undefined;
+    onCalculator: () => void;
 }
 
 const usbStyles: Record<string, string> = {
@@ -54,8 +46,33 @@ function ScannerBadge({ usb }: { usb: UsbStatus | undefined }) {
     );
 }
 
-export function PosHeader({ scanBox, scan, onScanChange, usb, onPair }: Props) {
-    const { user, societe } = useSession();
+/** The whole till on the whole screen: no browser bar to distract a cashier. */
+function FullscreenButton() {
+    const t = useT();
+    const [on, setOn] = useState(() => document.fullscreenElement !== null);
+    useEffect(() => {
+        const sync = () => setOn(document.fullscreenElement !== null);
+        document.addEventListener('fullscreenchange', sync);
+        return () => document.removeEventListener('fullscreenchange', sync);
+    }, []);
+    if (!document.documentElement.requestFullscreen) return null;
+
+    const label = on ? t('spa.pos.quitter_plein_ecran') : t('spa.pos.plein_ecran');
+
+    return (
+        <button
+            className="btn btn-secondary min-h-10 px-3"
+            title={label}
+            aria-label={label}
+            onClick={() => void (on ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(() => {})}
+        >
+            {on ? <Minimize2 /> : <Maximize2 />}
+        </button>
+    );
+}
+
+export function PosHeader({ scanBox, scan, onScanChange, usb, journee, onCalculator }: Props) {
+    const { user, societe, devise } = useSession();
     const { logout } = useSessionActions();
     const t = useT();
 
@@ -74,7 +91,7 @@ export function PosHeader({ scanBox, scan, onScanChange, usb, onPair }: Props) {
                 <ScanBarcode className="pointer-events-none absolute start-3 size-5 text-brand" />
                 <input
                     ref={scanBox}
-                    className="field min-h-11 border-2 border-brand bg-brand-soft ps-11 pe-12 text-lg font-semibold tracking-wide focus:bg-surface"
+                    className="field min-h-11 border-2 border-brand bg-brand-soft ps-11 text-lg font-semibold tracking-wide focus:bg-surface"
                     value={scan}
                     onChange={(e) => onScanChange(e.target.value)}
                     placeholder={t('scan.placeholder')}
@@ -84,22 +101,25 @@ export function PosHeader({ scanBox, scan, onScanChange, usb, onPair }: Props) {
                     enterKeyHint="done"
                     spellCheck={false}
                 />
-                <span className="kbd pointer-events-none absolute end-3 text-ink-3" aria-hidden>
-                    <CornerDownLeft className="size-3" />
-                </span>
             </label>
 
             <div className="ms-auto flex flex-wrap items-center gap-2">
+                {/* Today so far: what was sold and what cash came in. */}
+                {journee && (
+                    <span className="hidden h-10 items-center gap-2 rounded-full bg-surface-2 px-3 text-sm md:inline-flex" title={t('spa.pos.aujourdhui')}>
+                        <span className="font-semibold text-ink-2">{t('spa.pos.aujourdhui')}</span>
+                        <span className="num font-extrabold">{formatMoney(journee.total, devise)}</span>
+                        <span className="num hidden text-xs text-ink-3 xl:inline">· {t('spa.pos.ventes_jour', { count: journee.ventes })} · {formatMoney(journee.especes, devise)} {t('spa.pos.especes_jour')}</span>
+                    </span>
+                )}
+
                 <ScannerBadge usb={usb} />
 
-                <span className="hidden h-10 items-center gap-1.5 rounded-full bg-surface-2 px-3 text-sm font-semibold text-ink-2 xl:inline-flex">
-                    <Clock />
-                </span>
-
-                <button className="btn btn-secondary min-h-10 px-3" onClick={onPair} title={t('pos.appairer_titre')}>
-                    <Smartphone />
-                    <span className="hidden 2xl:inline">{t('pos.appairer')}</span>
+                <button className="btn btn-secondary min-h-10 px-3" onClick={onCalculator} title={t('spa.pos.calculatrice')} aria-label={t('spa.pos.calculatrice')}>
+                    <CalcIcon />
                 </button>
+                <FullscreenButton />
+                <AlertsBell />
 
                 <LanguageSwitch compact />
 

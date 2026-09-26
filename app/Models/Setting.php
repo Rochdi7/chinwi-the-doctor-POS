@@ -26,7 +26,7 @@ class Setting extends Model
     /** VAT rate a new article starts with (Paramètres); 0 % unless changed. */
     public static function tvaDefaut(): float
     {
-        return (float) (static::get('tva_defaut') ?? 0);
+        return (float) (static::get('tva_defaut') ?? 20);
     }
 
     public static function put(string $key, $value): void

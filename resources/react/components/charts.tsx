@@ -56,7 +56,14 @@ function niceMax(v: number): number {
 function compact(v: number): string {
     if (Math.abs(v) >= 1_000_000) return `${Number((v / 1_000_000).toFixed(1))}M`;
     if (Math.abs(v) >= 1_000) return `${Number((v / 1_000).toFixed(1))}k`;
-    return String(Math.round(v));
+    // Small scales (an empty chart spans 0..1) keep their decimals.
+    return String(Number(v.toFixed(v < 10 ? 2 : 0)));
+}
+
+/** "09/2026" -> "09/26": short, and never mistaken for the year 2020. */
+function shortMonth(label: string): string {
+    const [m, y] = label.split('/');
+    return y ? `${m}/${y.slice(-2)}` : label;
 }
 
 interface LineProps {
@@ -109,7 +116,7 @@ export function LineChart({ labels, series, format, height = 240 }: LineProps) {
                     </g>
                 ))}
                 {labels.map((l, i) => (i % Math.ceil(n / 6) === 0 || i === n - 1) && (
-                    <text key={l} x={x(i)} y={H - 6} textAnchor="middle" fontSize="11" fill="var(--color-ink-3)">{l.slice(0, 5)}</text>
+                    <text key={l} x={x(i)} y={H - 6} textAnchor="middle" fontSize="11" fill="var(--color-ink-3)">{shortMonth(l)}</text>
                 ))}
                 {series.map((s) => {
                     const d = s.values.map((v, i) => `${i ? 'L' : 'M'}${x(i)},${y(v)}`).join(' ');

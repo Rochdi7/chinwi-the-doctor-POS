@@ -8,7 +8,6 @@ import type { Session } from '@/types/api';
 import LoginPage from '@/pages/LoginPage';
 
 const PosPage = lazy(() => import('@/features/pos/PosPage'));
-const ScannerPage = lazy(() => import('@/pages/ScannerPage'));
 const AppLayout = lazy(() => import('@/layouts/AppLayout'));
 const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
 const ArticlesPage = lazy(() => import('@/pages/ArticlesPage'));
@@ -74,9 +73,8 @@ export default function App() {
                     <Suspense fallback={loading}>
                         <Routes>
                             <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
-                            {/* Full-screen: the till and the phone scanner. */}
+                            {/* Full-screen: the till. */}
                             <Route path="/pos" element={<RequireAuth><PosPage /></RequireAuth>} />
-                            <Route path="/scanner" element={<RequireAuth><ScannerPage /></RequireAuth>} />
                             {/* Back office. */}
                             <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
                                 <Route index element={<Suspense fallback={loading}><DashboardPage /></Suspense>} />

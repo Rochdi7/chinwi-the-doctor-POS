@@ -2,6 +2,7 @@ import { useMemo, useState, type RefObject } from 'react';
 import { Banknote, CheckCircle2, Clock3, CreditCard, ShoppingBag, Trash2, TriangleAlert, UserRound, ScanBarcode } from 'lucide-react';
 import { useSession, useT } from '@/auth/session';
 import { Dialog } from '@/components/ui/Dialog';
+import { Combobox } from '@/components/ui/Combobox';
 import { formatMoney, formatQty } from '@/lib/format';
 import { usePos } from '../store';
 import { CartLine } from './CartLine';
@@ -110,14 +111,14 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
 
             {/* ---- Totals (from Laravel) ---- */}
             <div className={`space-y-1.5 border-t border-line bg-surface-2 px-4 py-2.5 short:py-1.5 transition-opacity ${apercuStale && !empty ? 'opacity-70' : ''}`}>
-                <div className="flex justify-between gap-4 text-xs text-ink-2">
+                {(shown?.total_tva ?? 0) > 0 && <div className="flex justify-between gap-4 text-xs text-ink-2">
                     <span>
                         {t('item.total_ht')} <span className="num font-semibold text-ink">{formatMoney(shown?.total_ht ?? 0, devise)}</span>
                     </span>
                     <span>
                         {t('invoice.total_tva')} <span className="num font-semibold text-ink">{formatMoney(shown?.total_tva ?? 0, devise)}</span>
                     </span>
-                </div>
+                </div>}
                 <div className="flex items-center justify-between gap-3 rounded-ctl bg-navy px-4 py-2.5 short:py-1.5 text-white">
                     <span className="text-xs font-bold tracking-wider uppercase opacity-80 rtl:text-sm rtl:tracking-normal rtl:normal-case">{t('pos.total')}</span>
                     <span className="num text-[1.9rem] short:text-[1.6rem] leading-none font-extrabold tracking-tight whitespace-nowrap">
@@ -129,18 +130,16 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
             {/* ---- Payment ---- */}
             <div className="space-y-2.5 border-t border-line px-4 pt-3 pb-4 short:space-y-2 short:pt-2 short:pb-3">
                 <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                    <label className="relative flex items-center">
-                        <UserRound className="pointer-events-none absolute start-3 size-4 text-ink-3" />
-                        <select
-                            className="field ps-9 text-sm"
-                            value={clientId ?? ''}
-                            onChange={(e) => setClient(e.target.value === '' ? null : Number(e.target.value))}
-                            aria-label={t('invoice.client')}
-                        >
-                            <option value="">{t('vente.client_passage')}</option>
-                            {clients.map((c) => <option key={c.id} value={c.id}>{c.raison_sociale}</option>)}
-                        </select>
-                    </label>
+                    <Combobox
+                        size="sm"
+                        icon={<UserRound className="size-4" />}
+                        value={clientId === null ? '' : String(clientId)}
+                        onChange={(v) => setClient(v === '' ? null : Number(v))}
+                        options={clients.map((c) => ({ value: String(c.id), label: c.raison_sociale }))}
+                        placeholder={t('vente.client_passage')}
+                        clearable
+                        aria-label={t('invoice.client')}
+                    />
 
                     <div role="radiogroup" aria-label={t('spa.pos.paiement')} className="flex gap-1 rounded-ctl bg-surface-2 p-1 ring-1 ring-line">
                         {modes.map(({ value, icon: Icon, label }) => {
@@ -164,7 +163,7 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
 
                 <div className="short:grid short:grid-cols-[auto_minmax(0,1fr)] short:items-center short:gap-x-3">
                     <label htmlFor="montant-recu" className="mb-1 block short:mb-0 short:max-w-24 text-xs font-bold tracking-wide text-ink-2 uppercase rtl:text-sm rtl:tracking-normal rtl:normal-case">
-                        {t('pos.montant_recu')} <span className="kbd ms-1 align-middle text-ink-3 normal-case">F4</span>
+                        {t('pos.montant_recu')}
                     </label>
                     <div className="flex items-stretch overflow-hidden rounded-ctl border border-line-strong bg-surface focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/20">
                         <input
@@ -221,7 +220,6 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
                     <span className="flex items-center gap-2">
                         {busy ? <span className="spinner size-5" /> : <CheckCircle2 className="size-6!" />}
                         {busy ? t('spa.pos.traitement') : t('pos.encaisser')}
-                        {!busy && <span className="kbd border-white/60 text-white">F9</span>}
                     </span>
                     {!empty && shown && <span className="num rounded-md bg-black/15 px-2 py-1 text-base">{formatMoney(shown.total_ttc, devise)}</span>}
                 </button>

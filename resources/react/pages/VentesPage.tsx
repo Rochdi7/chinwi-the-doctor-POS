@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Plus, Printer, Pencil, ArrowLeft, Banknote, CreditCard, Trash2, ShoppingCart } from 'lucide-react';
@@ -11,7 +11,7 @@ import { formatQty, parseAmount } from '@/lib/format';
 import { Dialog } from '@/components/ui/Dialog';
 import { toast } from '@/components/ui/toast';
 import { DataTable, Pagination, type Column } from '@/components/ui/table';
-import { DateText, DeleteButton, FilterSelect, ModeBadge, Money, PageHeader, SearchBox, Section, StatutBadge, Toolbar, useMoney } from '@/components/ui/misc';
+import { DateRange, DateText, DeleteButton, FilterSelect, ModeBadge, Money, PageHeader, SearchBox, Section, StatutBadge, Toolbar, useMoney } from '@/components/ui/misc';
 import { SelectField, TextArea, TextField, fieldErrors } from '@/components/ui/form';
 import type { Article, InvoiceDetail, InvoiceLine, InvoiceRow, InvoiceStatut, PaymentMode } from '@/types/api';
 
@@ -65,8 +65,7 @@ export default function VentesPage() {
                         options={[{ value: '', label: `${t('invoice.statut')}: ${t('spa.ui.tous')}` }, ...(['validee', 'partielle', 'payee'] as InvoiceStatut[]).map((s) => ({ value: s, label: t(`statut.${s}`) }))]} />
                     <FilterSelect label={t('invoice.client')} value={params.client_id} onChange={(v) => set({ client_id: v })}
                         options={[{ value: '', label: `${t('invoice.client')}: ${t('spa.ui.tous')}` }, ...(clients.data ?? []).map((c) => ({ value: String(c.id), label: c.raison_sociale }))]} />
-                    <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.du')}<input type="date" className="field min-h-10 w-auto" value={params.du} onChange={(e) => set({ du: e.target.value })} /></label>
-                    <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.au')}<input type="date" className="field min-h-10 w-auto" value={params.au} onChange={(e) => set({ au: e.target.value })} /></label>
+                    <DateRange du={params.du} au={params.au} onChange={set} />
                 </Toolbar>
                 <DataTable
                     columns={columns} rows={list.data?.data} rowKey={(i) => i.id} loading={list.isPending} refreshing={list.isFetching && list.isPlaceholderData}
@@ -229,6 +228,69 @@ let lineSeq = 0;
 const blank = (): Line => ({ key: `n${++lineSeq}`, article_id: null, designation: '', quantite: '1', prix_unitaire: '0', remise: '0', tva: '0' });
 
 /**
+ * Search box with its results beneath, the same panel as the Combobox:
+ * arrow keys, Enter, Escape, closes on a click elsewhere.
+ */
+function ArticlePicker({ value, onChange, results, onPick }: { value: string; onChange: (v: string) => void; results: Article[] | undefined; onPick: (a: Article) => void }) {
+    const t = useT();
+    const box = useRef<HTMLDivElement>(null);
+    const [active, setActive] = useState(0);
+    const [closed, setClosed] = useState(false);
+    const open = !closed && results !== undefined;
+
+    useEffect(() => { setActive(0); setClosed(false); }, [results]);
+    useEffect(() => {
+        if (!open) return;
+        const onDown = (e: MouseEvent) => { if (!box.current?.contains(e.target as Node)) setClosed(true); };
+        document.addEventListener('mousedown', onDown);
+        return () => document.removeEventListener('mousedown', onDown);
+    }, [open]);
+
+    const pick = (a: Article) => { onPick(a); setClosed(true); };
+
+    return (
+        <div ref={box} className="relative">
+            <input
+                className="field"
+                value={value}
+                onChange={(e) => onChange(e.target.value)}
+                onFocus={() => setClosed(false)}
+                onKeyDown={(e) => {
+                    if (!open || !results) return;
+                    if (e.key === 'ArrowDown') { e.preventDefault(); setActive((a) => Math.min(results.length - 1, a + 1)); }
+                    else if (e.key === 'ArrowUp') { e.preventDefault(); setActive((a) => Math.max(0, a - 1)); }
+                    else if (e.key === 'Enter') { e.preventDefault(); const a = results[active]; if (a) pick(a); }
+                    else if (e.key === 'Escape') { e.preventDefault(); setClosed(true); }
+                }}
+                placeholder={t('pos.recherche')}
+                aria-label={t('invoice.ajouter_article')}
+                aria-expanded={open}
+                autoComplete="off"
+                spellCheck={false}
+            />
+            {open && results && (
+                <ul role="listbox" className="absolute inset-x-0 top-full z-20 mt-1 max-h-80 overflow-y-auto rounded-card border border-line bg-surface py-1 shadow-lift">
+                    {results.length === 0 && <li className="px-3 py-3 text-sm text-ink-3">{t('invoice.aucun_article_trouve')}</li>}
+                    {results.map((a, i) => (
+                        <li
+                            key={a.id}
+                            role="option"
+                            aria-selected={i === active}
+                            onMouseEnter={() => setActive(i)}
+                            onClick={() => pick(a)}
+                            className={`flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 text-[0.95rem] ${i === active ? 'bg-brand-soft text-brand' : ''}`}
+                        >
+                            <span className="min-w-0 truncate"><b>{a.designation}</b> <span className="text-xs text-ink-3">{a.reference}</span></span>
+                            <Money value={a.prix_vente} />
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
+    );
+}
+
+/**
  * The back-office sale form (was the Filament "Ventes" form): lines with a
  * free price and discount, optional client, optional payment on creation.
  * Stock, totals and status are computed by Laravel on save.
@@ -323,22 +385,7 @@ export function VenteFormPage() {
 
             <Section title={t('spa.ui.lignes_vente')} className="overflow-visible">
                 <div className="space-y-3 p-4">
-                    <div className="relative">
-                        <input className="field" value={picker} onChange={(e) => setPicker(e.target.value)} placeholder={t('pos.recherche')} aria-label={t('invoice.ajouter_article')} />
-                        {pickerQ && found.data && (
-                            <ul className="absolute inset-x-0 top-full z-20 mt-1 max-h-72 overflow-y-auto rounded-ctl border border-line bg-surface shadow-lift">
-                                {found.data.length === 0 && <li className="px-3 py-2 text-sm text-ink-3">{t('invoice.aucun_article_trouve')}</li>}
-                                {found.data.map((a) => (
-                                    <li key={a.id}>
-                                        <button type="button" className="flex w-full items-center justify-between gap-3 px-3 py-2 text-start hover:bg-brand-soft" onClick={() => addArticle(a)}>
-                                            <span><b>{a.designation}</b> <span className="text-xs text-ink-3">{a.reference}</span></span>
-                                            <Money value={a.prix_vente} />
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </div>
+                    <ArticlePicker value={picker} onChange={setPicker} results={pickerQ ? found.data : undefined} onPick={addArticle} />
 
                     {lines.length > 0 && (
                         <div className="overflow-x-auto">

@@ -72,7 +72,8 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     };
     const token = xsrfToken();
     if (token) headers['X-XSRF-TOKEN'] = token;
-    if (options.body !== undefined) headers['Content-Type'] = 'application/json';
+    const multipart = options.body instanceof FormData;
+    if (options.body !== undefined && !multipart) headers['Content-Type'] = 'application/json';
 
     let response: Response;
 
@@ -81,7 +82,7 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
             method: options.method ?? 'GET',
             credentials: 'same-origin',
             headers,
-            body: options.body === undefined ? undefined : JSON.stringify(options.body),
+            body: options.body === undefined ? undefined : multipart ? (options.body as FormData) : JSON.stringify(options.body),
             signal: options.signal,
         });
     } catch (error) {

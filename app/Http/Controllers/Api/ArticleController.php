@@ -60,7 +60,8 @@ class ArticleController extends Controller
         return response()->json([
             'reference' => 'ART-'.str_pad((string) (Article::max('id') + 1), 4, '0', STR_PAD_LEFT),
             'code_barre' => Barcode::generate(),
-            'unite' => 'Unite',
+            // Pieces: what a shop counts by default.
+            'unite' => 'Piece',
             'tva' => Setting::tvaDefaut(),
             'unites' => $this->unites(null),
         ]);
@@ -116,6 +117,27 @@ class ArticleController extends Controller
         $article->delete();
 
         return response()->json(null, 204);
+    }
+
+    /**
+     * The product photo, prepared by the browser (square PNG, background
+     * removed). Replacing it deletes the old file (Article::booted).
+     */
+    public function image(Request $request, Article $article): JsonResponse
+    {
+        $request->validate(['image' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:4096']]);
+
+        $path = $request->file('image')->storeAs('articles', $article->id.'-'.uniqid().'.png', Article::IMAGE_DISK);
+        $article->update(['image' => $path]);
+
+        return response()->json($this->row($article->load('category:id,nom')));
+    }
+
+    public function destroyImage(Article $article): JsonResponse
+    {
+        $article->update(['image' => null]);
+
+        return response()->json($this->row($article->load('category:id,nom')));
     }
 
     /** @return array<string, mixed> */
@@ -184,6 +206,7 @@ class ArticleController extends Controller
             'stock' => (float) $a->stock,
             'tva' => (float) $a->tva,
             'actif' => (bool) $a->actif,
+            'image_url' => $a->imageUrl(),
             'label_url' => $a->code_barre ? route('article.label', $a) : null,
             'barcode_url' => $a->code_barre ? route('article.barcode', $a) : null,
         ];

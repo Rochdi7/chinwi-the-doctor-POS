@@ -55,17 +55,23 @@ const ProductTile = memo(function ProductTile({ article, devise, onAdd }: { arti
                 onAdd(article);
                 setPulse((p) => p + 1);
             }}
-            className={`relative flex min-h-[8.25rem] w-full flex-col gap-2 rounded-card border bg-surface p-3 text-start transition-[border-color,box-shadow,transform] duration-100 hover:border-brand hover:shadow-lift active:scale-[0.97] focus-visible:outline-3 focus-visible:outline-brand/35 ${
+            className={`relative flex w-full flex-col gap-2 rounded-card border bg-surface p-3 text-start transition-[border-color,box-shadow,transform] duration-100 hover:border-brand hover:shadow-lift active:scale-[0.97] focus-visible:outline-3 focus-visible:outline-brand/35 ${
                 inCart > 0 ? 'border-brand bg-brand-soft ring-1 ring-brand' : 'border-line'
             } ${pulse ? 'animate-pop' : ''}`}
             key={pulse}
         >
-            <span className="flex items-start justify-between gap-2">
-                <span aria-hidden className={`grid size-10 flex-none place-items-center rounded-ctl text-sm font-extrabold ${tones[(article.category_id ?? 0) % tones.length]}`}>
-                    {article.designation.trim().slice(0, 2).toUpperCase()}
-                </span>
+            <span className="relative block w-full">
+                {article.image_url ? (
+                    <span className="grid aspect-[4/3] w-full place-items-center overflow-hidden rounded-ctl bg-surface-2">
+                        <img src={article.image_url} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
+                    </span>
+                ) : (
+                    <span aria-hidden className={`grid aspect-[4/3] w-full place-items-center rounded-ctl text-2xl font-extrabold ${tones[(article.category_id ?? 0) % tones.length]}`}>
+                        {article.designation.trim().slice(0, 2).toUpperCase()}
+                    </span>
+                )}
                 {inCart > 0 && (
-                    <span className="num rounded-full bg-brand px-2 py-0.5 text-sm font-extrabold text-white">× {formatQty(inCart)}</span>
+                    <span className="num absolute top-1.5 end-1.5 rounded-full bg-brand px-2 py-0.5 text-sm font-extrabold text-white shadow-lift">× {formatQty(inCart)}</span>
                 )}
             </span>
             <span className="min-w-0">
@@ -107,9 +113,7 @@ export function ProductGrid({ articles, loading, refreshing, recherche, onRecher
                             <button type="button" className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-line hover:text-ink" onClick={() => onRecherche('')} aria-label="×">
                                 <X className="size-4" />
                             </button>
-                        ) : (
-                            <span className="kbd text-ink-3" aria-hidden>F2</span>
-                        )}
+                        ) : null}
                     </span>
                 </label>
                 <span className="hidden text-xs font-semibold whitespace-nowrap text-ink-3 sm:block">
@@ -120,7 +124,7 @@ export function ProductGrid({ articles, loading, refreshing, recherche, onRecher
             <div className={`min-h-0 flex-1 overflow-y-auto p-3 transition-opacity ${refreshing ? 'opacity-60' : ''}`}>
                 {loading ? (
                     <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2.5">
-                        {Array.from({ length: 12 }, (_, i) => <div key={i} className="skeleton h-[8.25rem] rounded-card" />)}
+                        {Array.from({ length: 12 }, (_, i) => <div key={i} className="skeleton h-[13.5rem] rounded-card" />)}
                     </div>
                 ) : !articles || articles.length === 0 ? (
                     <div className="flex h-full min-h-60 flex-col items-center justify-center gap-2 text-center text-ink-2">

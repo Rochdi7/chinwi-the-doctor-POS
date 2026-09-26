@@ -40,7 +40,7 @@ class ListArticles extends ListRecords
             ->modalDescription(__('app.ajout_rapide.aide'))
             ->modalWidth('2xl')
             ->createAnother(true)
-            ->form([
+            ->form([Forms\Components\Grid::make(2)->schema([
                 Forms\Components\TextInput::make('code_barre')
                     ->label(__('app.article.code_barre'))
                     ->placeholder(__('app.ajout_rapide.scanner'))
@@ -67,6 +67,7 @@ class ListArticles extends ListRecords
                     ->required()
                     ->maxLength(255)
                     ->columnSpanFull(),
+                ArticleResource::imageField(),
                 Forms\Components\TextInput::make('prix_vente')
                     ->label(__('app.article.prix_vente'))
                     ->numeric()
@@ -101,8 +102,7 @@ class ListArticles extends ListRecords
                     ->native(false)
                     ->createOptionForm(CategoryResource::formSchema())
                     ->createOptionModalHeading(__('app.categorie.creer')),
-            ])
-            ->columns(2)
+            ])])
             ->mutateFormDataUsing(fn (array $data): array => $data + [
                 'reference' => 'ART-'.str_pad((string) (Article::max('id') + 1), 4, '0', STR_PAD_LEFT),
                 'unite' => 'Unite',

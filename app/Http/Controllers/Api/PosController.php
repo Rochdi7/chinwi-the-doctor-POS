@@ -179,6 +179,21 @@ class PosController extends Controller
         ];
     }
 
+    /**
+     * Today at this till: sales, what was invoiced and what cash came in.
+     * Shown in the header and refreshed after each sale.
+     */
+    public function journee(): JsonResponse
+    {
+        $today = now()->toDateString();
+
+        return response()->json([
+            'ventes' => Invoice::query()->whereDate('date_facture', $today)->count(),
+            'total' => (float) Invoice::query()->whereDate('date_facture', $today)->sum('total_ttc'),
+            'especes' => (float) Payment::query()->whereDate('date_paiement', $today)->where('mode', 'especes')->sum('montant'),
+        ]);
+    }
+
     /** @return array{code: string, article: array<string, mixed>|null, message: string, stock_zero: bool} */
     private function resolve(string $raw): array
     {
@@ -245,6 +260,7 @@ class PosController extends Controller
             'stock' => (float) $a->stock,
             'unite' => $a->unite,
             'unite_label' => Units::label($a->unite),
+            'image_url' => $a->imageUrl(),
             'category_id' => $a->category_id,
         ];
     }

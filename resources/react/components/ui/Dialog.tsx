@@ -56,7 +56,9 @@ export function Dialog({ open, onClose, title, description, children, footer, si
                             </button>
                         </div>
                     )}
-                    <div className="overflow-y-auto px-5 py-4">{children}</div>
+                    {/* relative: an absolute child (a Toggle's sr-only checkbox) would
+                        otherwise be placed against the <dialog> and make it scroll too. */}
+                    <div className="relative min-h-0 overflow-y-auto px-5 py-4">{children}</div>
                     {footer && <div className="flex flex-wrap justify-end gap-2 border-t border-line bg-surface-2 px-5 py-3">{footer}</div>}
                 </div>
             )}

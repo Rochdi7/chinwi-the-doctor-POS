@@ -1,0 +1,8 @@
+/* Nunito (variable, 200–1000), served from the app itself: works with no internet at the till. */
+@font-face {
+    font-family: 'Nunito';
+    src: url('Nunito-Variable.woff2') format('woff2');
+    font-weight: 200 1000;
+    font-style: normal;
+    font-display: swap;
+}

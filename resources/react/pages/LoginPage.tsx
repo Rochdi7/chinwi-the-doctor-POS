@@ -3,6 +3,7 @@ import { LogIn } from 'lucide-react';
 import { useSession, useSessionActions, useT } from '@/auth/session';
 import { ApiError, errorMessage } from '@/lib/api';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
+import { Checkbox, TextField } from '@/components/ui/form';
 
 /** Same users and passwords as the Filament panel login. */
 export default function LoginPage() {
@@ -52,37 +53,9 @@ export default function LoginPage() {
                         </p>
                     )}
 
-                    <label className="block space-y-1.5">
-                        <span className="text-sm font-semibold">{t('spa.auth.email')}</span>
-                        <input
-                            className="field"
-                            type="email"
-                            autoComplete="username"
-                            dir="ltr"
-                            required
-                            autoFocus
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                        />
-                    </label>
-
-                    <label className="block space-y-1.5">
-                        <span className="text-sm font-semibold">{t('spa.auth.password')}</span>
-                        <input
-                            className="field"
-                            type="password"
-                            autoComplete="current-password"
-                            dir="ltr"
-                            required
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </label>
-
-                    <label className="flex items-center gap-2 text-sm text-ink-2">
-                        <input type="checkbox" className="size-4 accent-brand" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
-                        {t('spa.auth.se_souvenir')}
-                    </label>
+                    <TextField label={t('spa.auth.email')} type="email" autoComplete="username" dir="ltr" required autoFocus value={email} onChange={setEmail} />
+                    <TextField label={t('spa.auth.password')} type="password" autoComplete="current-password" dir="ltr" required value={password} onChange={setPassword} />
+                    <Checkbox label={t('spa.auth.se_souvenir')} checked={remember} onChange={setRemember} />
 
                     <button type="submit" className="btn btn-primary w-full text-base" disabled={busy || !email || !password}>
                         {busy ? <span className="spinner size-5" /> : <LogIn />}

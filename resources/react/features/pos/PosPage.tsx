@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useT } from '@/auth/session';
-import { ApiError, errorMessage } from '@/lib/api';
+import { api, ApiError, errorMessage } from '@/lib/api';
 import { parseAmount } from '@/lib/format';
 import { toast } from '@/components/ui/toast';
 import { cartItems, usePos } from './store';
 import { scanCode, useApercu, useArticles, usePosInit, useVente } from './queries';
 import { useKeyboardScanner } from './hooks/useKeyboardScanner';
-import { usePhoneScans } from './hooks/usePhoneScans';
+import { useUsbStatus } from './hooks/useUsbStatus';
 import { PosHeader } from './components/PosHeader';
 import { CategoryRail } from './components/CategoryRail';
 import { ProductGrid } from './components/ProductGrid';
 import { CartPanel } from './components/CartPanel';
+import { Calculator } from './components/Calculator';
 import { SaleDoneDialog } from './components/SaleDoneDialog';
-import { PairDialog } from './components/PairDialog';
-import type { Article, ScanResult, VenteResult } from '@/types/api';
+import type { Article, PosJournee, ScanResult, VenteResult } from '@/types/api';
 
 const dialogOpen = () => document.querySelector('dialog[open]') !== null;
 
@@ -36,8 +36,11 @@ export default function PosPage() {
     const [scan, setScan] = useState('');
     const [recherche, setRecherche] = useState('');
     const [categorie, setCategorie] = useState<number | null>(null);
-    const [pairOpen, setPairOpen] = useState(false);
     const [done, setDone] = useState<VenteResult | null>(null);
+    const [calc, setCalc] = useState(false);
+
+    // Today's figures: fetched once, refreshed after each sale.
+    const journee = useQuery({ queryKey: ['pos', 'journee'], queryFn: () => api<PosJournee>('/pos/journee'), staleTime: 60_000 });
 
     const lines = usePos((s) => s.lines);
     const montantRecu = usePos((s) => s.montantRecu);
@@ -53,7 +56,7 @@ export default function PosPage() {
 
     const addArticle = useCallback((article: Article) => usePos.getState().add(article), []);
 
-    /** A scan from the USB scanner, the scan box or a paired phone. */
+    /** A scan from the USB scanner or the scan box. */
     const handleScan = useCallback(
         (result: ScanResult) => {
             if (!result.article) {
@@ -86,7 +89,7 @@ export default function PosPage() {
     );
 
     useKeyboardScanner(scanBox, onKeyboardScan);
-    const usb = usePhoneScans(handleScan, init.data?.usb, pairOpen);
+    const usb = useUsbStatus(init.data?.usb);
 
     // ---- Saving the sale ---------------------------------------------------
 
@@ -108,8 +111,9 @@ export default function PosPage() {
                     onSuccess: (result) => {
                         usePos.getState().nouvelleVente();
                         setDone(result);
-                        // Stock moved: the tiles must show it.
+                        // Stock moved and the day's figures too.
                         void queryClient.invalidateQueries({ queryKey: ['pos', 'articles'] });
+                        void queryClient.invalidateQueries({ queryKey: ['pos', 'journee'] });
                     },
                     onError: (error) => toast.error(errorMessage(error, t)),
                 },
@@ -151,7 +155,7 @@ export default function PosPage() {
 
     return (
         <div className="flex h-dvh flex-col">
-            <PosHeader scanBox={scanBox} scan={scan} onScanChange={setScan} usb={usb} onPair={() => setPairOpen(true)} />
+            <PosHeader scanBox={scanBox} scan={scan} onScanChange={setScan} usb={usb} journee={journee.data} onCalculator={() => setCalc(true)} />
 
             <main className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-3 lg:grid-cols-[10.5rem_minmax(0,1fr)_minmax(22rem,25rem)] lg:overflow-hidden xl:grid-cols-[12rem_minmax(0,1fr)_27rem]">
                 <CategoryRail categories={init.data?.categories ?? []} active={categorie} onSelect={setCategorie} />
@@ -179,10 +183,9 @@ export default function PosPage() {
                 />
             </main>
 
-            <p className="hidden border-t border-line bg-surface px-3 py-1 text-center text-xs text-ink-3 lg:block">{t('spa.pos.raccourcis')} · F4 {t('pos.montant_recu')}</p>
 
-            <PairDialog open={pairOpen} url={init.data?.scanner_url} onClose={() => { setPairOpen(false); focusScan(); }} />
             <SaleDoneDialog result={done} onClose={() => { setDone(null); focusScan(); }} />
+            <Calculator open={calc} onClose={() => { setCalc(false); focusScan(); }} onUse={(v) => { usePos.getState().setMontantRecu(String(v).replace('.', ',')); amountBox.current?.focus(); }} />
         </div>
     );
 }

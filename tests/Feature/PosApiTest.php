@@ -177,6 +177,23 @@ class PosApiTest extends TestCase
         $this->assertSame($this->user->id, Invoice::firstOrFail()->user_id);
     }
 
+    public function test_the_day_summary_counts_todays_sales_and_cash(): void
+    {
+        $article = $this->article(['prix_vente' => 10, 'tva' => 0]);
+        $this->actingAs($this->user);
+
+        $this->getJson('/api/pos/journee')->assertOk()->assertJsonPath('ventes', 0)->assertJsonPath('especes', 0);
+
+        foreach ([['especes', 1], ['tpe', 2]] as [$mode, $qty]) {
+            $this->postJson('/api/pos/ventes', ['items' => [['article_id' => $article->id, 'quantite' => $qty]], 'mode' => $mode, 'encaisser' => true, 'cle' => (string) Str::uuid()])->assertCreated();
+        }
+
+        $this->getJson('/api/pos/journee')->assertOk()
+            ->assertJsonPath('ventes', 2)
+            ->assertJsonPath('total', 30)
+            ->assertJsonPath('especes', 10);
+    }
+
     public function test_the_same_sale_key_never_sells_twice(): void
     {
         $article = $this->article();

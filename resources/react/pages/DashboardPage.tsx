@@ -6,7 +6,7 @@ import { useT } from '@/auth/session';
 import { api } from '@/lib/api';
 import { Dialog } from '@/components/ui/Dialog';
 import { DataTable, type Column } from '@/components/ui/table';
-import { DateText, Money, ModeBadge, PageHeader, StatutBadge, useMoney } from '@/components/ui/misc';
+import { DateRange, DateText, Money, ModeBadge, PageHeader, StatutBadge, useMoney } from '@/components/ui/misc';
 import { BarList, ChartCard, LineChart, Legend, SERIES, ShareBar } from '@/components/charts';
 import type { Dashboard, DashboardDetail, DashboardKey, InvoiceStatut, PaymentMode } from '@/types/api';
 
@@ -86,8 +86,7 @@ export default function DashboardPage() {
                 </div>
                 {preset === 'custom' && (
                     <div className="flex flex-wrap items-center gap-2 text-sm">
-                        <label className="flex items-center gap-2">{t('spa.ui.du')}<input type="date" className="field min-h-9 w-auto" value={range.du} onChange={(e) => setRange((r) => ({ ...r, du: e.target.value }))} /></label>
-                        <label className="flex items-center gap-2">{t('spa.ui.au')}<input type="date" className="field min-h-9 w-auto" value={range.au} onChange={(e) => setRange((r) => ({ ...r, au: e.target.value }))} /></label>
+                        <DateRange size="sm" du={range.du} au={range.au} onChange={(p) => setRange((r) => ({ ...r, ...p }))} />
                     </div>
                 )}
                 {query.isFetching && <span className="spinner size-4 text-brand" />}

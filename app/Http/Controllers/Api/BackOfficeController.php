@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\Invoice;
 use App\Models\Caisse;
 use App\Models\CaisseMouvement;
 use App\Models\Setting;
@@ -130,6 +131,38 @@ class BackOfficeController extends Controller
     public function journalEvents(): JsonResponse
     {
         return response()->json(['data' => ActivityLog::query()->distinct()->orderBy('event')->pluck('event')]);
+    }
+
+    // ---- Alertes: unpaid sales and empty shelves ------------------------------
+
+    /**
+     * What needs attention: sales not fully paid, articles at or below zero
+     * stock. Counts and totals cover everything; a few rows are listed.
+     */
+    public function alertes(): JsonResponse
+    {
+        $impayes = Invoice::query()->where('statut', '!=', 'payee')->with('client:id,raison_sociale');
+        $ruptures = Article::query()->where('actif', true)->where('stock', '<=', 0);
+        $bas = Article::query()->where('actif', true)->where('stock', '>', 0)->where('stock', '<=', 5);
+
+        return response()->json([
+            'impayes' => [
+                'count' => (clone $impayes)->count(),
+                'total' => round((float) (clone $impayes)->selectRaw('SUM(total_ttc - montant_paye) as t')->value('t'), 2),
+                'items' => (clone $impayes)->orderByDesc('date_facture')->orderByDesc('id')->limit(6)->get()
+                    ->map(fn (Invoice $i) => ['id' => $i->id, 'numero' => $i->numero, 'client' => $i->client?->raison_sociale, 'reste' => max($i->reste(), 0), 'date' => $i->date_facture?->toDateString()]),
+            ],
+            'ruptures' => [
+                'count' => (clone $ruptures)->count(),
+                'items' => (clone $ruptures)->orderBy('designation')->limit(6)->get(['id', 'designation', 'stock'])
+                    ->map(fn (Article $a) => ['id' => $a->id, 'designation' => $a->designation, 'stock' => (float) $a->stock]),
+            ],
+            'stock_bas' => [
+                'count' => (clone $bas)->count(),
+                'items' => (clone $bas)->orderBy('stock')->limit(6)->get(['id', 'designation', 'stock'])
+                    ->map(fn (Article $a) => ['id' => $a->id, 'designation' => $a->designation, 'stock' => (float) $a->stock]),
+            ],
+        ]);
     }
 
     // ---- Paramètres -----------------------------------------------------------

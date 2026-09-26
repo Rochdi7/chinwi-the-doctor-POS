@@ -3,6 +3,7 @@ import { Search, X, Trash2 } from 'lucide-react';
 import { useSession, useT } from '@/auth/session';
 import { formatMoney } from '@/lib/format';
 import { Dialog } from './Dialog';
+import { Combobox } from './Combobox';
 import type { InvoiceStatut, PaymentMode } from '@/types/api';
 
 /** Title row of a screen: heading, subtitle, actions on the end side. */
@@ -47,10 +48,19 @@ export function SearchBox({ value, onChange, placeholder }: { value: string; onC
 
 /** A compact select used as a list filter. */
 export function FilterSelect({ value, onChange, options, label }: { value: string; onChange: (v: string) => void; options: { value: string; label: string }[]; label: string }) {
+    return <Combobox size="sm" className="w-auto min-w-44" value={value} onChange={onChange} options={options} aria-label={label} />;
+}
+
+/** The "Du … Au …" pair of a list filter, one look everywhere. */
+export function DateRange({ du, au, onChange, size = 'md' }: { du: string; au: string; onChange: (r: { du?: string; au?: string }) => void; size?: 'md' | 'sm' }) {
+    const t = useT();
+    const h = size === 'sm' ? 'min-h-9' : 'min-h-10';
+
     return (
-        <select className="field min-h-10 w-auto text-sm font-semibold" value={value} onChange={(e) => onChange(e.target.value)} aria-label={label}>
-            {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
+        <>
+            <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.du')}<input type="date" className={`field ${h} w-auto`} value={du} onChange={(e) => onChange({ du: e.target.value })} /></label>
+            <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.au')}<input type="date" className={`field ${h} w-auto`} value={au} onChange={(e) => onChange({ au: e.target.value })} /></label>
+        </>
     );
 }
 

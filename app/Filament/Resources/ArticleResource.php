@@ -46,6 +46,7 @@ class ArticleResource extends Resource
                     ->required()
                     ->autofocus()
                     ->columnSpanFull(),
+                self::imageField(),
                 Forms\Components\TextInput::make('reference')
                     ->label(__('app.article.reference'))
                     ->required()
@@ -174,6 +175,27 @@ class ArticleResource extends Resource
     }
 
     /**
+     * Product photo. Resized in the browser before upload so a phone
+     * picture (4-8 MB) is stored at a few hundred KB.
+     */
+    public static function imageField(): Forms\Components\FileUpload
+    {
+        return Forms\Components\FileUpload::make('image')
+            ->label(__('app.article.image'))
+            ->image()
+            ->disk(Article::IMAGE_DISK)
+            ->directory('articles')
+            ->visibility('public')
+            ->maxSize(8192)
+            ->imageResizeMode('contain')
+            ->imageResizeTargetWidth('1000')
+            ->imageResizeTargetHeight('1000')
+            ->imageResizeUpscale(false)
+            ->imagePreviewHeight('160')
+            ->columnSpanFull();
+    }
+
+    /**
      * The unit menu: the standard list, plus whatever the record already
      * holds so an article saved before the list existed keeps its unit.
      *
@@ -191,6 +213,11 @@ class ArticleResource extends Resource
         return $table
             ->defaultSort('designation')
             ->columns([
+                Tables\Columns\ImageColumn::make('image')
+                    ->label('')
+                    ->disk(Article::IMAGE_DISK)
+                    ->square()
+                    ->size(48),
                 Tables\Columns\TextColumn::make('designation')
                     ->label(__('app.article.designation'))
                     ->searchable()
