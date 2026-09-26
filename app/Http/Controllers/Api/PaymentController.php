@@ -3,10 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Invoice;
 use App\Models\Payment;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Règlements (PaymentResource): the list, editing and deleting a payment.
@@ -49,14 +52,28 @@ class PaymentController extends Controller
 
     public function update(Request $request, Payment $payment): JsonResponse
     {
-        $payment->update($request->validate([
+        $data = $request->validate([
             'client_id' => ['nullable', 'integer', Rule::exists('clients', 'id')],
             'invoice_id' => ['nullable', 'integer', Rule::exists('invoices', 'id')],
-            'montant' => ['required', 'numeric'],
+            'montant' => ['required', 'numeric', 'min:0.01'],
             'date_paiement' => ['required', 'date'],
             'mode' => ['required', Rule::in(['especes', 'tpe'])],
             'reference' => ['nullable', 'string', 'max:60'],
-        ]));
+        ]);
+
+        DB::transaction(function () use ($payment, $data) {
+            // Never more than the invoice still owes, this payment's own share included.
+            if ($data['invoice_id'] ?? null) {
+                $invoice = Invoice::whereKey($data['invoice_id'])->lockForUpdate()->firstOrFail();
+                $max = max($invoice->reste() + ($payment->invoice_id === $invoice->id ? (float) $payment->montant : 0), 0);
+
+                if ((float) $data['montant'] > $max + 0.001) {
+                    throw ValidationException::withMessages(['montant' => __('validation.max.numeric', ['attribute' => __('validation.attributes.montant'), 'max' => $max])]);
+                }
+            }
+
+            $payment->update($data);
+        });
 
         return response()->json($this->row($payment->load(['client:id,raison_sociale', 'invoice:id,numero'])));
     }

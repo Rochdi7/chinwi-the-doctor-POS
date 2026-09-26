@@ -53,7 +53,7 @@ export function Dialog({ open, onClose, title, description, children, footer, si
                                 {title && <h2 className="text-lg font-bold">{title}</h2>}
                                 {description && <p className="mt-1 text-sm text-ink-2">{description}</p>}
                             </div>
-                            <button className="btn btn-ghost -me-2 min-h-9 px-2" onClick={onClose} aria-label={t('spa.ui.fermer')}>
+                            <button type="button" className="btn btn-ghost -me-2 min-h-9 px-2" onClick={onClose} aria-label={t('spa.ui.fermer')}>
                                 <X />
                             </button>
                         </div>

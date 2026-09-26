@@ -17,6 +17,19 @@ class Invoice extends Model
         'montant_paye' => 'decimal:2',
     ];
 
+    protected static function booted(): void
+    {
+        // The foreign keys cascade in SQL, which fires no model event: delete
+        // the payments and lines one by one first so their observers take the
+        // cash back out of the drawer and put the goods back on the shelf.
+        static::deleting(function (Invoice $invoice) {
+            $invoice->payments()->get()->each->delete();
+            $invoice->items()->get()->each->delete();
+        });
+
+        static::deleted(fn (Invoice $invoice) => $invoice->client?->recalcSolde());
+    }
+
     public function client()
     {
         return $this->belongsTo(Client::class);

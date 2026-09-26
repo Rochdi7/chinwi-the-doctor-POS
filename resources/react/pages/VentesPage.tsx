@@ -87,10 +87,14 @@ function EncaisserDialog({ invoice, onClose }: { invoice: Pick<InvoiceRow, 'id' 
     const [mode, setMode] = useState<PaymentMode>('especes');
     const [error, setError] = useState<string | null>(null);
     const [busy, setBusy] = useState(false);
+    // Two quick Enters run before the re-render that disables the button.
+    const sending = useRef(false);
 
     const submit = async () => {
+        if (sending.current) return;
         const value = parseAmount(montant);
         if (value === null) return setError(t('spa.erreur.validation'));
+        sending.current = true;
         setBusy(true);
         setError(null);
         try {
@@ -102,6 +106,7 @@ function EncaisserDialog({ invoice, onClose }: { invoice: Pick<InvoiceRow, 'id' 
         } catch (e) {
             setError(e instanceof ApiError && e.kind === 'validation' ? e.firstError() : errorMessage(e, t));
         } finally {
+            sending.current = false;
             setBusy(false);
         }
     };

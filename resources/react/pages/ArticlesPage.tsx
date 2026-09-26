@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Plus, Printer, Download, RefreshCw, ScanBarcode, AlertTriangle, ExternalLink, ChevronDown, ChevronUp, Camera, X, ImageIcon } from 'lucide-react';
+import { Plus, Printer, Download, RefreshCw, ScanBarcode, AlertTriangle, ExternalLink, ChevronDown, ChevronUp, Camera, X, ImageIcon, Upload } from 'lucide-react';
 import { useSession, useT } from '@/auth/session';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { useListParams } from '@/lib/useListParams';
@@ -13,6 +13,7 @@ import { Badge, DeleteButton, FilterSelect, Money, PageHeader, SearchBox, Toolba
 import { SelectField, TextField, Toggle, fieldErrors } from '@/components/ui/form';
 import { formatQty } from '@/lib/format';
 import { prepareProductImage, type PreparedImage } from '@/lib/imageTools';
+import { WebcamCapture } from '@/components/WebcamCapture';
 import type { ArticleDefaults, ArticleRow } from '@/types/api';
 
 const defaults = { q: '', categorie: '', stock: '', sort: 'designation', dir: 'asc' };
@@ -122,7 +123,7 @@ export default function ArticlesPage() {
                 <Pagination page={list.data} onPage={(n) => set({ page: String(n) })} />
             </section>
 
-            {editing && <ArticleForm article={editing === 'new' ? null : editing} prefill={prefill} onClose={() => setEditing(null)} />}
+            {editing && <ArticleForm article={editing === 'new' ? null : editing} prefill={editing === 'new' ? prefill : null} onClose={() => setEditing(null)} />}
             <QuickAddDialog
                 open={quickAdd}
                 onClose={() => setQuickAdd(false)}
@@ -131,6 +132,18 @@ export default function ArticlesPage() {
             />
         </div>
     );
+}
+
+/**
+ * "1 000,50" -> 1000.5. Something that still is not a number is sent as
+ * typed, so the server's numeric rule refuses it instead of it becoming null
+ * and silently saved as 0.
+ */
+function toNumber(value: string): number | string | null {
+    const s = value.replace(/[\s  ]/g, '').replace(',', '.');
+    if (s === '') return null;
+    const n = Number(s);
+    return Number.isFinite(n) ? n : value;
 }
 
 /** GET /articles/{id} or /articles/nouveau: the same fields, partly filled. */
@@ -147,6 +160,7 @@ function ArticleForm({ article, prefill, onClose }: { article: ArticleRow | null
     const queryClient = useQueryClient();
     const categories = useCategories();
     const [form, setForm] = useState<FormState | null>(null);
+    const loadedStock = useRef<string | null>(null);
     const [unites, setUnites] = useState<Record<string, string>>({});
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [newCat, setNewCat] = useState<string | null>(null);
@@ -165,6 +179,7 @@ function ArticleForm({ article, prefill, onClose }: { article: ArticleRow | null
         if (!d || form) return;
         const src = { ...d, ...(prefill ?? {}) };
         setUnites(d.unites);
+        loadedStock.current = src.stock !== undefined ? String(src.stock) : '0';
         setForm({
             designation: src.designation ?? '', reference: src.reference ?? '', code_barre: src.code_barre ?? '',
             unite: src.unite ?? 'Unite', prix_vente: src.prix_vente !== undefined ? String(src.prix_vente) : '',
@@ -179,9 +194,9 @@ function ArticleForm({ article, prefill, onClose }: { article: ArticleRow | null
             method: article ? 'PUT' : 'POST',
             body: {
                 ...f, code_barre: f.code_barre || null, marque: f.marque || null, category_id: f.category_id ? Number(f.category_id) : null,
-                prix_vente: f.prix_vente === '' ? null : Number(f.prix_vente.replace(',', '.')),
-                prix_achat: f.prix_achat === '' ? null : Number(f.prix_achat.replace(',', '.')),
-                stock: f.stock === '' ? null : Number(f.stock.replace(',', '.')), tva: f.tva === '' ? null : Number(f.tva.replace(',', '.')),
+                prix_vente: toNumber(f.prix_vente), prix_achat: toNumber(f.prix_achat), tva: toNumber(f.tva),
+                // Untouched on an edit: leave it out, the till may have sold some meanwhile.
+                stock: article && f.stock === loadedStock.current ? undefined : toNumber(f.stock),
             },
         }),
         {
@@ -340,6 +355,7 @@ function ArticleForm({ article, prefill, onClose }: { article: ArticleRow | null
 function PhotoField({ current, busy, removeBg, onToggleBg, onFile, onRemove }: { current: string | null; busy: boolean; removeBg: boolean; onToggleBg: (v: boolean) => void; onFile: (f: File) => void; onRemove: () => void }) {
     const t = useT();
     const inputId = 'photo-' + Math.random().toString(36).slice(2, 8);
+    const [webcam, setWebcam] = useState(false);
 
     return (
         <div className="space-y-1.5 sm:col-span-2">
@@ -351,10 +367,14 @@ function PhotoField({ current, busy, removeBg, onToggleBg, onFile, onRemove }: {
                 <div className="flex min-w-0 flex-1 flex-col gap-2">
                     <div className="flex flex-wrap gap-2">
                         <label htmlFor={inputId} className="btn btn-secondary cursor-pointer">
-                            <Camera />
+                            <Upload />
                             {t('spa.ui.choisir_photo')}
                         </label>
                         <input id={inputId} type="file" accept="image/*" capture="environment" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ''; }} />
+                        <button type="button" className="btn btn-secondary" onClick={() => setWebcam(true)} disabled={busy}>
+                            <Camera />
+                            {t('spa.ui.prendre_photo')}
+                        </button>
                         {current && (
                             <button type="button" className="btn btn-danger-ghost" onClick={onRemove}>
                                 <X />
@@ -369,6 +389,7 @@ function PhotoField({ current, busy, removeBg, onToggleBg, onFile, onRemove }: {
                     <p className="text-xs text-ink-3">{busy ? t('spa.ui.photo_traitement') : t('spa.ui.photo_aide')}</p>
                 </div>
             </div>
+            <WebcamCapture open={webcam} onClose={() => setWebcam(false)} onCapture={onFile} />
         </div>
     );
 }

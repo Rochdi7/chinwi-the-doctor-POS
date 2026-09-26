@@ -143,6 +143,12 @@ class ArticleController extends Controller
     /** @return array<string, mixed> */
     private function validated(Request $request, ?Article $article): array
     {
+        // Scanned into the form on an AZERTY keyboard: store the digits the
+        // till will look up, and check those for uniqueness and checksum.
+        if (is_string($request->input('code_barre'))) {
+            $request->merge(['code_barre' => Barcode::normalizeScan($request->input('code_barre'))]);
+        }
+
         $data = $request->validate([
             'designation' => ['required', 'string', 'max:255'],
             'reference' => ['required', 'string', 'max:60', Rule::unique('articles', 'reference')->ignore($article)],
@@ -168,7 +174,11 @@ class ArticleController extends Controller
 
         $data['code_barre'] = isset($data['code_barre']) && trim($data['code_barre']) !== '' ? trim($data['code_barre']) : null;
         $data['prix_achat'] ??= 0;
-        $data['stock'] ??= 0;
+        // Left out of an edit when the field was not touched: sales made while
+        // the form was open must not be overwritten by the stock it loaded.
+        if (! $article || array_key_exists('stock', $data)) {
+            $data['stock'] ??= 0;
+        }
         $data['tva'] ??= Setting::tvaDefaut();
 
         return $data;

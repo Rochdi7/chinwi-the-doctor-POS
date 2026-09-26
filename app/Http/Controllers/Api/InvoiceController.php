@@ -9,7 +9,9 @@ use App\Models\Payment;
 use App\Services\InvoiceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Ventes (InvoiceResource): list, detail, the create/edit form, Encaisser.
@@ -122,7 +124,8 @@ class InvoiceController extends Controller
 
     public function destroy(Invoice $invoice): JsonResponse
     {
-        $invoice->delete();
+        // All or nothing: the payments, lines, stock and cash reversals go with it.
+        DB::transaction(fn () => $invoice->delete());
 
         return response()->json(null, 204);
     }
@@ -130,14 +133,22 @@ class InvoiceController extends Controller
     /** "Encaisser": a payment of at most what is still owed. */
     public function encaisser(Request $request, Invoice $invoice): JsonResponse
     {
-        $reste = $invoice->reste();
-
         $data = $request->validate([
-            'montant' => ['required', 'numeric', 'min:0.01', 'max:'.max($reste, 0)],
+            'montant' => ['required', 'numeric', 'min:0.01'],
             'mode' => ['required', Rule::in(['especes', 'tpe'])],
         ]);
 
-        $payment = $this->invoices->encaisser($invoice, (float) $data['montant'], $data['mode']);
+        // Checked under a row lock: two quick submits must not both pass
+        // against the same amount still owed and pay the invoice twice.
+        $payment = DB::transaction(function () use ($invoice, $data) {
+            $reste = Invoice::whereKey($invoice->id)->lockForUpdate()->firstOrFail()->reste();
+
+            if ((float) $data['montant'] > max($reste, 0) + 0.001) {
+                throw ValidationException::withMessages(['montant' => __('validation.max.numeric', ['attribute' => __('validation.attributes.montant'), 'max' => max($reste, 0)])]);
+            }
+
+            return $this->invoices->encaisser($invoice, (float) $data['montant'], $data['mode']);
+        });
 
         return response()->json([
             'invoice' => $this->row($invoice->refresh()),
@@ -157,8 +168,8 @@ class InvoiceController extends Controller
             'items.*.id' => ['nullable', 'integer'],
             'items.*.article_id' => ['nullable', 'integer', Rule::exists('articles', 'id')],
             'items.*.designation' => ['required', 'string', 'max:255'],
-            'items.*.quantite' => ['required', 'numeric'],
-            'items.*.prix_unitaire' => ['required', 'numeric'],
+            'items.*.quantite' => ['required', 'numeric', 'gt:0'],
+            'items.*.prix_unitaire' => ['required', 'numeric', 'min:0'],
             'items.*.remise' => ['nullable', 'numeric', 'min:0'],
             'items.*.tva' => ['nullable', 'numeric', 'min:0', 'max:100'],
         ]);
