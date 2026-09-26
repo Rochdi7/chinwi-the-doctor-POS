@@ -4,6 +4,8 @@ import { LayoutDashboard, LogOut, Calculator as CalcIcon, Maximize2, Minimize2, 
 import { useSession, useSessionActions, useT } from '@/auth/session';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { AlertsBell } from '@/components/AlertsBell';
+import { ProfileDialog } from '@/components/ProfileDialog';
+import { UserAvatar } from '@/components/UserAvatar';
 import { formatMoney } from '@/lib/format';
 import type { PosJournee, UsbStatus } from '@/types/api';
 
@@ -30,7 +32,7 @@ const usbDot: Record<string, string> = {
 };
 
 /** A square tile in the dark bar: one icon, one job. */
-const tile = 'grid size-10 flex-none place-items-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20 focus-visible:outline-3 focus-visible:outline-white/50 disabled:opacity-50';
+const tile = 'grid size-10 flex-none place-items-center rounded-lg border border-white/10 bg-white/[0.06] text-white/85 shadow-[inset_0_1px_0_rgb(255_255_255/0.06)] transition-colors hover:border-white/20 hover:bg-white/[0.12] hover:text-white active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 disabled:opacity-50';
 
 /**
  * What Windows says about the USB scanner (App\Support\ScannerUsb). Nothing
@@ -93,8 +95,7 @@ export function PosHeader({ usb, journee, onCalculator, onRefresh, refreshing }:
     const { user, societe, devise } = useSession();
     const { logout } = useSessionActions();
     const t = useT();
-    // Letters only: "Mehdi (Propriétaire)" gives "MP", not "M(".
-    const initials = (user?.name ?? '').split(/\s+/).map((w) => w.replace(/[^\p{L}]/gu, '')).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('');
+    const [profile, setProfile] = useState(false);
 
     return (
         <header className="flex flex-none flex-wrap items-center gap-x-3 gap-y-2 bg-[linear-gradient(90deg,var(--color-teal),var(--color-teal-deep))] px-3 py-2 text-white">
@@ -120,14 +121,14 @@ export function PosHeader({ usb, journee, onCalculator, onRefresh, refreshing }:
                 <ScannerBadge usb={usb} />
 
                 {/* Back office (dashboard, products, sales...). */}
-                <Link className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#4f46e5] px-3 text-sm font-bold text-white transition-colors hover:bg-[#4338ca]" to="/" title={t('spa.pos.gestion')} aria-label={t('spa.pos.gestion')}>
+                <Link className="inline-flex h-10 items-center gap-2 rounded-lg border border-white/15 bg-white px-3.5 text-sm font-bold text-ink shadow-[0_1px_2px_rgb(0_0_0/0.2)] transition-colors hover:bg-white/90 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60" to="/" title={t('spa.pos.gestion')} aria-label={t('spa.pos.gestion')}>
                     <LayoutDashboard className="size-4" />
                     <span className="hidden xl:inline">{t('spa.pos.gestion')}</span>
                 </Link>
 
                 <span className="mx-1 hidden h-7 w-px bg-white/15 lg:block" />
 
-                <button className={`${tile} bg-warm hover:bg-warm/85`} onClick={onCalculator} title={t('spa.pos.calculatrice')} aria-label={t('spa.pos.calculatrice')}>
+                <button className={`${tile} border-warm/60 bg-warm text-white hover:border-warm hover:bg-warm/90`} onClick={onCalculator} title={t('spa.pos.calculatrice')} aria-label={t('spa.pos.calculatrice')}>
                     <CalcIcon className="size-5" />
                 </button>
                 <FullscreenButton />
@@ -141,14 +142,17 @@ export function PosHeader({ usb, journee, onCalculator, onRefresh, refreshing }:
 
                 <LanguageSwitch compact />
 
-                <div className="flex h-10 items-center gap-2 rounded-xl bg-white/10 ps-1.5">
-                    <span aria-hidden className="grid size-7 place-items-center rounded-full bg-warm text-xs font-extrabold text-white">{initials || '·'}</span>
-                    <span className="hidden max-w-32 truncate text-sm font-semibold xl:inline">{user?.name}</span>
+                <div className="flex h-10 items-center rounded-xl bg-white/10">
+                    <button className="flex h-10 items-center gap-2 rounded-s-xl ps-1.5 pe-1 hover:bg-white/15" onClick={() => setProfile(true)} title={t('spa.profil.titre')} aria-label={t('spa.profil.titre')}>
+                        <UserAvatar user={user} />
+                        <span className="hidden max-w-32 truncate text-sm font-semibold xl:inline">{user?.name}</span>
+                    </button>
                     <button className="grid h-10 w-9 place-items-center rounded-e-xl text-white/80 hover:bg-white/15 hover:text-white" onClick={() => void logout()} title={t('spa.auth.deconnexion')} aria-label={t('spa.auth.deconnexion')}>
                         <LogOut className="size-4 rtl:-scale-x-100" />
                     </button>
                 </div>
             </div>
+            <ProfileDialog open={profile} onClose={() => setProfile(false)} />
         </header>
     );
 }

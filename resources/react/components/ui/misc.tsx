@@ -131,7 +131,7 @@ export function DeleteButton({ onConfirm, label, compact = false }: { onConfirm:
                     <>
                         <button className="btn btn-secondary" onClick={() => setOpen(false)} data-autofocus>{t('spa.ui.annuler')}</button>
                         <button
-                            className="btn btn-primary bg-bad hover:bg-bad-ink"
+                            className="btn btn-danger"
                             disabled={busy}
                             onClick={async () => {
                                 setBusy(true);

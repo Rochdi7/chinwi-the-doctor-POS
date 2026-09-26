@@ -26,11 +26,13 @@ export function CategoryRail({ categories, active, onSelect }: Props) {
                         type="button"
                         aria-pressed={selected}
                         onClick={() => onSelect(c.id)}
-                        className={`flex w-24 flex-none flex-col items-center gap-1.5 rounded-2xl border bg-surface px-1.5 py-3 text-center transition-[border-color,box-shadow,transform] duration-100 active:scale-[0.97] lg:w-full ${
-                            selected ? 'border-warm shadow-card ring-1 ring-warm' : 'border-line hover:border-line-strong hover:shadow-card'
+                        className={`group flex w-24 flex-none flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-center transition-[background-color,border-color,box-shadow] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 focus-visible:ring-offset-2 focus-visible:ring-offset-canvas active:translate-y-px lg:w-full ${
+                            selected
+                                ? 'border-ink bg-surface shadow-[0_0_0_1px_var(--color-ink),0_4px_12px_-4px_rgb(15_23_42/0.25)]'
+                                : 'border-line bg-surface shadow-[0_1px_2px_rgb(15_23_42/0.04)] hover:border-line-strong hover:bg-surface-2'
                         }`}
                     >
-                        <span className={`grid size-11 place-items-center rounded-xl ${selected ? 'bg-warm-soft text-warm' : 'bg-surface-2 text-ink-2'}`}>
+                        <span className={`grid size-10 place-items-center rounded-lg transition-colors ${selected ? 'bg-ink text-white' : 'bg-surface-2 text-ink-2 ring-1 ring-line group-hover:bg-surface group-hover:text-ink'}`}>
                             <CategoryIcon name={c.id === null ? null : c.nom} className="size-6" strokeWidth={1.75} />
                         </span>
                         <span className={`line-clamp-2 w-full text-xs leading-tight font-bold ${selected ? 'text-ink' : 'text-ink-2'}`}>{c.nom}</span>

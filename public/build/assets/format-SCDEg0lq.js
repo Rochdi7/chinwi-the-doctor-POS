@@ -1,1 +1,0 @@
-function u(e,n){const[t="0",r="00"]=Math.abs(e).toFixed(2).split("."),o=t.replace(/\B(?=(\d{3})+(?!\d))/g," ");return`${e<0?"-":""}${o},${r} ${n}`}function a(e){return String(Number(e.toFixed(2)))}function s(e){const n=e.replace(/\s/g,"").replace(",",".");if(n==="")return null;const t=Number(n);return Number.isFinite(t)&&t>=0?t:null}export{a,u as f,s as p};

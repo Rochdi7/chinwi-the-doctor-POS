@@ -82,7 +82,7 @@ export function CartPanel({ apercu, apercuStale, clients, amountBox }: Props) {
                     aria-label={t('invoice.client')}
                 />
 
-                <div role="radiogroup" aria-label={t('spa.pos.paiement')} className="flex gap-1 rounded-ctl bg-surface-2 p-1 ring-1 ring-line">
+                <div role="radiogroup" aria-label={t('spa.pos.paiement')} className="segmented">
                     {modes.map(({ value, icon: Icon, label }) => {
                         const on = mode === value;
                         return (
@@ -93,7 +93,7 @@ export function CartPanel({ apercu, apercuStale, clients, amountBox }: Props) {
                                 aria-checked={on}
                                 onClick={() => setMode(value)}
                                 title={label}
-                                className={`flex min-h-8 items-center gap-1.5 rounded-md px-2.5 text-sm font-bold transition-colors ${on ? 'bg-surface text-brand shadow-card ring-2 ring-brand' : 'text-ink-2 hover:text-ink'}`}
+                                className={on ? 'text-brand!' : ''}
                             >
                                 <Icon className="size-4" />
                                 <span className="hidden 2xl:inline">{label}</span>
@@ -189,7 +189,7 @@ export function CartPanel({ apercu, apercuStale, clients, amountBox }: Props) {
                                 <button
                                     key={amount}
                                     type="button"
-                                    className="num rounded-full border border-line-strong bg-surface px-2.5 py-1 text-xs font-bold text-ink-2 hover:border-brand hover:text-brand"
+                                    className="chip num"
                                     onClick={() => setMontantRecu(String(amount))}
                                 >
                                     {formatMoney(amount, devise)}

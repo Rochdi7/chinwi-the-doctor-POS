@@ -25,29 +25,31 @@ export function ActionBar({ total, busy, onEncaisser, onEnregistrer }: Props) {
     const [confirmClear, setConfirmClear] = useState(false);
 
     return (
-        <div className="flex flex-none flex-wrap items-center justify-center gap-2 border-t border-line bg-surface px-3 py-2 short:py-1.5 sm:justify-end">
-            <button type="button" className="btn min-h-12 short:min-h-11 rounded-xl bg-bad px-5 text-white hover:bg-bad-ink" disabled={empty || busy} onClick={() => setConfirmClear(true)}>
+        <div className="flex flex-none flex-wrap items-center justify-center gap-2 border-t border-line bg-surface/95 px-3 py-2.5 short:py-2 backdrop-blur sm:justify-end">
+            <button type="button" className="btn btn-danger-outline btn-lg short:min-h-11" disabled={empty || busy} onClick={() => setConfirmClear(true)}>
                 <Trash2 />
                 {t('pos.vider')}
             </button>
 
-            <button type="button" className="btn min-h-12 short:min-h-11 rounded-xl bg-navy px-5 text-white hover:bg-teal-deep" disabled={empty || busy} onClick={onEnregistrer}>
+            <button type="button" className="btn btn-secondary btn-lg short:min-h-11" disabled={empty || busy} onClick={onEnregistrer}>
                 <Clock3 />
                 {t('pos.sans_paiement')}
             </button>
 
+            <span className="mx-1 hidden h-8 w-px bg-line sm:block" />
+
             <button
                 type="button"
-                className="btn btn-success min-h-12 short:min-h-11 min-w-56 justify-between rounded-xl px-5 text-lg font-extrabold shadow-[0_8px_18px_-10px_rgb(5_150_105/0.9)]"
+                className="btn btn-success btn-lg short:min-h-11 min-w-60 justify-between gap-4 ps-4 pe-2 text-[1.05rem] font-bold"
                 disabled={empty || busy}
                 onClick={onEncaisser}
             >
                 <span className="flex items-center gap-2">
-                    {busy ? <span className="spinner size-5" /> : <CheckCircle2 className="size-6!" />}
+                    {busy ? <span className="spinner size-5" /> : <CheckCircle2 className="size-5!" />}
                     {busy ? t('spa.pos.traitement') : t('pos.encaisser')}
-                    <span className="kbd hidden lg:inline-grid">F9</span>
+                    <span className="kbd hidden border-white/40 bg-white/10 lg:inline-grid">F9</span>
                 </span>
-                {!empty && total !== undefined && <span className="num rounded-md bg-black/15 px-2 py-1 text-base">{formatMoney(total, devise)}</span>}
+                {!empty && total !== undefined && <span className="num rounded-md bg-black/20 px-2.5 py-1 text-base font-extrabold">{formatMoney(total, devise)}</span>}
             </button>
 
             <Dialog
@@ -59,7 +61,7 @@ export function ActionBar({ total, busy, onEncaisser, onEnregistrer }: Props) {
                     <>
                         <button className="btn btn-secondary" onClick={() => setConfirmClear(false)} data-autofocus>{t('spa.ui.annuler')}</button>
                         <button
-                            className="btn btn-primary bg-bad hover:bg-bad-ink"
+                            className="btn btn-danger"
                             onClick={() => {
                                 usePos.getState().vider();
                                 setConfirmClear(false);

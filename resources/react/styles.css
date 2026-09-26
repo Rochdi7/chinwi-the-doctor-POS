@@ -118,28 +118,94 @@ html[dir='rtl'] .num { font-family: var(--font-sans); }
         box-shadow: var(--shadow-card);
     }
 
+    /*
+     * Buttons, Geist-style: a 1px border that carries the shape, a soft
+     * two-layer shadow, a faint top highlight on solid fills, a focus ring
+     * drawn outside the border. Disabled is neutral grey for every variant,
+     * so a dead button never looks like a faded live one.
+     */
     .btn {
+        --btn-ring: rgb(29 78 216 / 0.45);
+        position: relative;
         display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;
         min-height: 2.75rem; padding-inline: 1rem; border-radius: var(--radius-ctl);
-        font-weight: 600; font-size: 0.95rem; white-space: nowrap; cursor: pointer;
-        border: 1px solid transparent;
-        transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, transform 60ms ease;
+        font-weight: 600; font-size: 0.95rem; letter-spacing: -0.005em; white-space: nowrap; cursor: pointer;
+        border: 1px solid transparent; user-select: none;
+        transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease, transform 80ms ease;
     }
-    .btn:active:not(:disabled) { transform: scale(0.985); }
-    .btn:focus-visible { outline: 3px solid rgb(29 78 216 / 0.35); outline-offset: 1px; }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn svg { width: 1.2rem; height: 1.2rem; flex: none; }
+    html[dir='rtl'] .btn { letter-spacing: normal; }
+    .btn:active:not(:disabled) { transform: translateY(1px); }
+    .btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--btn-ring); }
+    .btn:disabled {
+        cursor: not-allowed; background: var(--color-surface-2); color: var(--color-ink-3);
+        border-color: var(--color-line); box-shadow: none;
+    }
+    .btn svg { width: 1.15rem; height: 1.15rem; flex: none; }
 
-    .btn-primary { background: var(--color-brand); color: #fff; }
+    /* Solid fills share the same depth: inset highlight + small drop. */
+    .btn-primary, .btn-success, .btn-danger, .btn-dark {
+        color: #fff;
+        box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.14), 0 1px 2px rgb(15 23 42 / 0.12), 0 2px 6px -2px rgb(15 23 42 / 0.18);
+    }
+    .btn-primary { background: var(--color-brand); border-color: var(--color-brand-hover); }
     .btn-primary:hover:not(:disabled) { background: var(--color-brand-hover); }
-    .btn-success { background: var(--color-ok); color: #fff; }
+    .btn-success { --btn-ring: rgb(5 150 105 / 0.5); background: var(--color-ok); border-color: var(--color-ok-hover); }
     .btn-success:hover:not(:disabled) { background: var(--color-ok-hover); }
-    .btn-secondary { background: var(--color-surface); color: var(--color-ink-2); border-color: var(--color-line-strong); }
-    .btn-secondary:hover:not(:disabled) { background: var(--color-surface-2); color: var(--color-ink); }
+    .btn-danger { --btn-ring: rgb(220 38 38 / 0.45); background: var(--color-bad); border-color: var(--color-bad-ink); }
+    .btn-danger:hover:not(:disabled) { background: var(--color-bad-ink); }
+    .btn-dark { --btn-ring: rgb(15 23 42 / 0.4); background: var(--color-ink); border-color: var(--color-ink); }
+    .btn-dark:hover:not(:disabled) { background: #1e293b; }
+
+    .btn-secondary {
+        background: var(--color-surface); color: var(--color-ink); border-color: var(--color-line-strong);
+        box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+    }
+    .btn-secondary:hover:not(:disabled) { background: var(--color-surface-2); border-color: var(--color-ink-3); }
+    /* Outline that turns red on hover: for "clear", "delete" next to other actions. */
+    .btn-danger-outline {
+        --btn-ring: rgb(220 38 38 / 0.45);
+        background: var(--color-surface); color: var(--color-bad); border-color: var(--color-line-strong);
+        box-shadow: 0 1px 2px rgb(15 23 42 / 0.05);
+    }
+    .btn-danger-outline:hover:not(:disabled) { background: var(--color-bad-soft); border-color: rgb(220 38 38 / 0.45); }
     .btn-ghost { background: transparent; color: var(--color-ink-2); }
     .btn-ghost:hover:not(:disabled) { background: var(--color-surface-2); color: var(--color-ink); }
     .btn-danger-ghost { background: transparent; color: var(--color-bad); }
     .btn-danger-ghost:hover:not(:disabled) { background: var(--color-bad-soft); }
+    .btn-ghost:disabled, .btn-danger-ghost:disabled { background: transparent; border-color: transparent; }
+
+    .btn-lg { min-height: 3rem; padding-inline: 1.25rem; font-size: 1rem; border-radius: 10px; }
+
+    /*
+     * Filter chips and segmented toggles: a pressed state that reads from
+     * across the counter (solid ink) instead of a thin coloured outline.
+     */
+    .segmented {
+        display: inline-flex; gap: 2px; padding: 3px; border-radius: 10px;
+        background: var(--color-surface-2); border: 1px solid var(--color-line);
+    }
+    .segmented > button {
+        display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+        min-height: 2rem; padding-inline: 0.65rem; border-radius: 7px;
+        font-size: 0.85rem; font-weight: 600; color: var(--color-ink-2); cursor: pointer;
+        transition: background-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+    }
+    .segmented > button:hover:not([aria-checked='true']) { color: var(--color-ink); background: rgb(15 23 42 / 0.04); }
+    .segmented > button[aria-checked='true'] {
+        background: var(--color-surface); color: var(--color-ink);
+        box-shadow: 0 0 0 1px var(--color-line-strong), 0 1px 3px rgb(15 23 42 / 0.1);
+    }
+    .segmented > button:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--btn-ring, rgb(29 78 216 / 0.45)); }
+
+    .chip {
+        display: inline-flex; align-items: center; gap: 0.35rem; height: 1.85rem; padding-inline: 0.7rem;
+        border-radius: 999px; border: 1px solid var(--color-line-strong); background: var(--color-surface);
+        font-size: 0.78rem; font-weight: 700; color: var(--color-ink-2); cursor: pointer;
+        transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease;
+    }
+    .chip:hover { border-color: var(--color-ink-3); color: var(--color-ink); }
+    .chip[aria-pressed='true'] { background: var(--color-ink); border-color: var(--color-ink); color: #fff; }
+    .chip:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--color-surface), 0 0 0 4px rgb(29 78 216 / 0.45); }
 
     .field {
         width: 100%; min-height: 2.75rem; padding-inline: 0.85rem; border-radius: var(--radius-ctl);

@@ -32,7 +32,7 @@ function StockBadge({ stock }: { stock: number }) {
     );
 }
 
-const stepBtn = 'grid size-7 flex-none place-items-center rounded-full bg-surface-2 text-ink transition-colors hover:bg-brand-soft hover:text-brand active:bg-brand active:text-white disabled:opacity-40 disabled:hover:bg-surface-2 disabled:hover:text-ink';
+const stepBtn = 'grid size-7 flex-none place-items-center rounded-md border border-line-strong bg-surface text-ink shadow-[0_1px_2px_rgb(15_23_42/0.05)] transition-colors hover:border-ink-3 hover:bg-surface-2 active:translate-y-px focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/45 disabled:border-line disabled:bg-surface-2 disabled:text-ink-3 disabled:shadow-none';
 
 /**
  * One product card: photo, category, name, price and how many are in the
@@ -119,7 +119,7 @@ export function ProductGrid({ articles, categories, loading, refreshing, recherc
                         </button>
                     )}
                 </label>
-                <span className="hidden h-11 items-center rounded-xl bg-surface px-3 text-xs font-semibold whitespace-nowrap text-ink-3 shadow-card sm:inline-flex">
+                <span className="hidden h-11 items-center rounded-xl border border-line bg-surface px-3 text-xs font-semibold whitespace-nowrap text-ink-2 shadow-[0_1px_2px_rgb(15_23_42/0.04)] sm:inline-flex">
                     {refreshing ? <span className="spinner size-4 align-middle" /> : `${articles?.length ?? 0} ${t('article.plural')}`}
                 </span>
             </div>
