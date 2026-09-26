@@ -10,6 +10,9 @@ use Mpdf\Mpdf;
 
 class InvoicePdf
 {
+    /** Thermal roll width in mm (standard 80mm POS printer paper). */
+    private const ROLL_WIDTH = 80;
+
     /**
      * Arabic goes through mPDF, French through dompdf.
      *
@@ -36,14 +39,34 @@ class InvoicePdf
      */
     public static function receipt(Payment $payment): array
     {
-        $payment->loadMissing(['client', 'invoice']);
+        $payment->loadMissing(['client', 'invoice.items']);
 
         return self::build(
             frenchView: 'pdf.receipt',
             arabicView: 'pdf.receipt',
             data: ['payment' => $payment] + self::common(),
             filename: 'recu-'.$payment->id.'.pdf',
+            paper: [self::ROLL_WIDTH, self::receiptHeight($payment)],
         );
+    }
+
+    /**
+     * A roll has no fixed page length, so the page is cut to the content:
+     * a fixed block for the header, totals and payment lines, plus one
+     * detail line per article and one line per ~30 characters of its name.
+     */
+    private static function receiptHeight(Payment $payment): float
+    {
+        $height = 90;
+
+        foreach ($payment->invoice?->items ?? [] as $item) {
+            $height += 4 + 4.5 * max(1, (int) ceil(mb_strlen((string) $item->designation) / 30));
+        }
+
+        $height += 4 * substr_count((string) Setting::get('societe_adresse'), "
+");
+
+        return $height;
     }
 
     private static function common(): array
@@ -79,21 +102,27 @@ class InvoicePdf
         return 'data:image/jpeg;base64,'.base64_encode((string) file_get_contents($path));
     }
 
-    private static function build(string $frenchView, string $arabicView, array $data, string $filename): array
+    /**
+     * @param  array{0: float, 1: float}|null  $paper  width and height in mm; null for A4
+     */
+    private static function build(string $frenchView, string $arabicView, array $data, string $filename, ?array $paper = null): array
     {
         $body = Locales::isArabicScript()
-            ? self::arabic($arabicView, $data)
-            : self::french($frenchView, $data);
+            ? self::arabic($arabicView, $data, $paper)
+            : self::french($frenchView, $data, $paper);
 
         return [$body, $filename];
     }
 
-    private static function french(string $view, array $data): string
+    private static function french(string $view, array $data, ?array $paper): string
     {
-        return Pdf::loadView($view, $data)->setPaper('a4')->output();
+        // dompdf takes custom sizes in points.
+        $size = $paper ? [0, 0, $paper[0] * 72 / 25.4, $paper[1] * 72 / 25.4] : 'a4';
+
+        return Pdf::loadView($view, $data)->setPaper($size)->output();
     }
 
-    private static function arabic(string $view, array $data): string
+    private static function arabic(string $view, array $data, ?array $paper): string
     {
         $tmp = storage_path('app/mpdf');
 
@@ -103,7 +132,9 @@ class InvoicePdf
 
         $mpdf = new Mpdf([
             'mode' => 'utf-8',
-            'format' => 'A4',
+            'format' => $paper ?? 'A4',
+            // mPDF's 15mm default margins would eat half of a roll.
+            ...($paper ? ['margin_left' => 3, 'margin_right' => 3, 'margin_top' => 4, 'margin_bottom' => 4] : []),
             'directionality' => 'rtl',
             // Leave these off: they swap Arabic runs onto mPDF's bundled
             // XBRiyaz instead of Tajawal. Shaping does not depend on them.
