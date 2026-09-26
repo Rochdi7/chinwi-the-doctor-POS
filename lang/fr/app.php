@@ -448,6 +448,22 @@ return [
             'echec' => 'Adresse e-mail ou mot de passe incorrect.',
             'trop' => 'Trop de tentatives. Réessayez dans une minute.',
         ],
+        'profil' => [
+            'titre' => 'Mon profil',
+            'sous_titre' => 'Votre nom, votre photo et votre mot de passe.',
+            'nom' => 'Nom',
+            'photo' => 'Photo de profil',
+            'choisir_photo' => 'Choisir une photo',
+            'retirer_photo' => 'Retirer la photo',
+            'mot_de_passe' => 'Changer le mot de passe',
+            'mot_de_passe_aide' => 'Laissez vide pour garder le mot de passe actuel.',
+            'actuel' => 'Mot de passe actuel',
+            'nouveau' => 'Nouveau mot de passe',
+            'confirmation' => 'Confirmer le nouveau mot de passe',
+            'enregistre' => 'Profil enregistré.',
+            'photo_enregistree' => 'Photo mise à jour.',
+            'photo_retiree' => 'Photo retirée.',
+        ],
         'erreur' => [
             'reseau' => 'Connexion au serveur impossible.',
             'validation' => 'Veuillez vérifier les informations.',
@@ -479,4 +495,4 @@ return [
             'chargement' => 'Chargement…',
         ],
     ],
-]
+];

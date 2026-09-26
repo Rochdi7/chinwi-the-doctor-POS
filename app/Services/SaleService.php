@@ -35,24 +35,58 @@ class SaleService
             throw ValidationException::withMessages(['items' => __('app.pos.panier_vide_erreur')]);
         }
 
-        // Two tills (often the same account on two devices) saving at the
-        // same instant both read the same "next" number, and the unique
-        // index refuses the second. Its transaction is rolled back whole
-        // (lines, stock, drawer, audit), so it is simply saved again with
-        // the number after.
-        for ($attempt = 1; ; $attempt++) {
-            try {
-                return $this->ecrire($lignes, $clientId, $encaisser, $montant, $mode);
-            } catch (UniqueConstraintViolationException $e) {
-                if ($attempt >= self::TENTATIVES || ! str_contains($e->getMessage(), 'numero')) {
-                    throw $e;
+        // Two tills (often the same account on two devices) can save at the
+        // same instant, and both would read the same "next" number. Sales
+        // are numbered one at a time: the second waits for the first to
+        // commit. Should the unique index still refuse one (a number just
+        // typed in the back office), its transaction is rolled back whole
+        // (lines, stock, drawer, audit) and saved again.
+        return $this->unParUn(function () use ($lignes, $clientId, $encaisser, $montant, $mode) {
+            for ($attempt = 1; ; $attempt++) {
+                try {
+                    return $this->ecrire($lignes, $clientId, $encaisser, $montant, $mode);
+                } catch (UniqueConstraintViolationException $e) {
+                    if ($attempt >= self::TENTATIVES || ! str_contains($e->getMessage(), 'numero')) {
+                        throw $e;
+                    }
                 }
             }
-        }
+        });
     }
 
     /** Attempts before a numbering collision is reported as an error. */
     private const TENTATIVES = 5;
+
+    /** How long a till waits for another till's sale to be written. */
+    private const ATTENTE_SECONDES = 20;
+
+    /**
+     * Run $write holding the database's named lock for invoice numbering.
+     * A MySQL/MariaDB lock, not the cache: waiters queue in the server
+     * instead of polling, and it is released the moment $write returns
+     * (after its commit) or the connection drops.
+     *
+     * @template T
+     *
+     * @param  callable(): T  $write
+     * @return T
+     */
+    private function unParUn(callable $write): mixed
+    {
+        if (! in_array(DB::connection()->getDriverName(), ['mysql', 'mariadb'], true)) {
+            return $write();
+        }
+
+        if ((int) DB::scalar('SELECT GET_LOCK(?, ?)', ['invoice-numero', self::ATTENTE_SECONDES]) !== 1) {
+            throw new \RuntimeException('Invoice numbering is busy.');
+        }
+
+        try {
+            return $write();
+        } finally {
+            DB::statement('DO RELEASE_LOCK(?)', ['invoice-numero']);
+        }
+    }
 
     /**
      * @param  array<int|string, array<string, mixed>>  $lignes
@@ -103,7 +137,7 @@ class SaleService
             }
 
             return [$invoice, $payment];
-        });
+        }, attempts: 3); // a deadlock between two tills is retried by Laravel
     }
 
     /**

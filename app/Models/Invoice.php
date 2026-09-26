@@ -37,6 +37,7 @@ class Invoice extends Model
         return $this->hasMany(Payment::class);
     }
 
+    /** The number the next invoice of the year takes (see SaleService::unParUn). */
     public static function nextNumero(): string
     {
         $year = date('Y');

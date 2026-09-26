@@ -37,6 +37,12 @@ Route::prefix('api')->name('api.')->group(function () {
     Route::post('/logout', [SessionController::class, 'logout'])->name('logout');
     Route::post('/locale', [SessionController::class, 'locale'])->name('locale');
 
+    Route::middleware('auth')->group(function () {
+        Route::put('/profil', [SessionController::class, 'profile'])->name('profil');
+        Route::post('/profil/avatar', [SessionController::class, 'avatar'])->name('profil.avatar');
+        Route::delete('/profil/avatar', [SessionController::class, 'destroyAvatar'])->name('profil.avatar.destroy');
+    });
+
     Route::middleware('auth')->prefix('pos')->name('pos.')->group(function () {
         Route::get('/init', [PosController::class, 'init'])->name('init');
         Route::get('/journee', [PosController::class, 'journee'])->name('journee');

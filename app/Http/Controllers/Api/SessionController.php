@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
+use App\Models\User;
 use App\Support\Locales;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -82,6 +83,45 @@ class SessionController extends Controller
         return response()->json($this->payload($request));
     }
 
+    /** The logged-in user's own name and, with the current one, password. */
+    public function profile(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:191'],
+            'current_password' => ['nullable', 'required_with:password', 'current_password'],
+            'password' => ['nullable', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $user = $request->user();
+        $user->name = $data['name'];
+        if (! empty($data['password'])) {
+            // The 'hashed' cast hashes it.
+            $user->password = $data['password'];
+        }
+        $user->save();
+
+        return response()->json($this->payload($request));
+    }
+
+    public function avatar(Request $request): JsonResponse
+    {
+        $request->validate(['avatar' => ['required', 'image', 'mimes:png,jpg,jpeg,webp', 'max:4096']]);
+
+        $user = $request->user();
+        $ext = $request->file('avatar')->extension();
+        $path = $request->file('avatar')->storeAs('avatars', $user->id.'-'.uniqid().'.'.$ext, User::AVATAR_DISK);
+        $user->update(['avatar' => $path]);
+
+        return response()->json($this->payload($request));
+    }
+
+    public function destroyAvatar(Request $request): JsonResponse
+    {
+        $request->user()->update(['avatar' => null]);
+
+        return response()->json($this->payload($request));
+    }
+
     /** @return array<string, mixed> */
     private function payload(Request $request): array
     {
@@ -89,7 +129,7 @@ class SessionController extends Controller
         $locale = app()->getLocale();
 
         return [
-            'user' => $user ? ['id' => $user->id, 'name' => $user->name, 'email' => $user->email] : null,
+            'user' => $user ? ['id' => $user->id, 'name' => $user->name, 'email' => $user->email, 'avatar_url' => $user->avatarUrl()] : null,
             'locale' => $locale,
             'dir' => Locales::isRtl($locale) ? 'rtl' : 'ltr',
             'locales' => collect(Locales::SUPPORTED)

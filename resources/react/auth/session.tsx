@@ -77,6 +77,14 @@ export function useSessionActions() {
             queryClient.removeQueries({ predicate: (q) => q.queryKey[0] !== sessionKey[0] });
         },
         setLocale: async (locale: string) => apply(await api<Session>('/locale', { method: 'POST', body: { locale } })),
+        updateProfile: async (body: { name: string; current_password?: string; password?: string; password_confirmation?: string }) =>
+            apply(await api<Session>('/profil', { method: 'PUT', body })),
+        uploadAvatar: async (file: Blob) => {
+            const fd = new FormData();
+            fd.append('avatar', file, file instanceof File ? file.name : 'avatar.png');
+            apply(await api<Session>('/profil/avatar', { method: 'POST', body: fd }));
+        },
+        removeAvatar: async () => apply(await api<Session>('/profil/avatar', { method: 'DELETE' })),
     };
 }
 

@@ -9,6 +9,7 @@ use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Storage;
 
 class User extends Authenticatable implements FilamentUser
 {
@@ -29,7 +30,26 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
+        'avatar',
     ];
+
+    /** Profile photos live on the public disk; a replaced one is removed. */
+    public const AVATAR_DISK = 'public';
+
+    protected static function booted(): void
+    {
+        static::updated(function (User $user) {
+            if ($user->wasChanged('avatar') && $old = $user->getOriginal('avatar')) {
+                Storage::disk(self::AVATAR_DISK)->delete($old);
+            }
+        });
+    }
+
+    public function avatarUrl(): ?string
+    {
+        // asset() follows the host the app is opened on, like Article::imageUrl().
+        return $this->avatar ? asset('storage/'.$this->avatar) : null;
+    }
 
     /**
      * The attributes that should be hidden for serialization.

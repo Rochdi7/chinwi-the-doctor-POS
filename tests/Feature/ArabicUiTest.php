@@ -34,7 +34,7 @@ class ArabicUiTest extends TestCase
         }
 
         // Règlements has no menu entry any more: payments are taken at the till.
-        foreach (['المبيعات', 'السلع', 'الزبناء'] as $item) {
+        foreach (['المبيعات', 'المنتوجات', 'الزبناء'] as $item) {
             $this->assertStringContainsString($item, $html, "item {$item} translated");
         }
     }
@@ -114,7 +114,7 @@ class ArabicUiTest extends TestCase
 
         // Darija words the Fusha file does not use: if these appear, the
         // ary file is being read rather than falling back to ar.
-        foreach (['الكيس', 'المعلومات', 'البيوعات', 'الشراية'] as $word) {
+        foreach (['الكيس', 'المعلومات', 'البيوعات', 'الكليان'] as $word) {
             $this->assertStringContainsString($word, $html, "darija term {$word} rendered");
         }
 

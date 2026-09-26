@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
-    LayoutDashboard, ShoppingCart, FileText, Banknote, Package, Tags, Users, Wallet, ScrollText, Settings, LogOut, Menu, X, UserRound,
+    LayoutDashboard, ShoppingCart, FileText, Banknote, Package, Tags, Users, Wallet, ScrollText, Settings, LogOut, Menu, X,
 } from 'lucide-react';
 import { useSession, useSessionActions, useT } from '@/auth/session';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { AlertsBell } from '@/components/AlertsBell';
+import { ProfileDialog } from '@/components/ProfileDialog';
+import { UserAvatar } from '@/components/UserAvatar';
 
 interface Item { to: string; icon: typeof LayoutDashboard; label: string; end?: boolean }
 
@@ -96,6 +98,7 @@ export default function AppLayout() {
     const { logout } = useSessionActions();
     const t = useT();
     const [open, setOpen] = useState(false);
+    const [profile, setProfile] = useState(false);
     const location = useLocation();
 
     useEffect(() => setOpen(false), [location.pathname]);
@@ -123,15 +126,18 @@ export default function AppLayout() {
                     <div className="ms-auto flex items-center gap-2">
                         <AlertsBell />
                         <LanguageSwitch compact />
-                        <div className="flex h-10 items-center gap-1 rounded-full border border-line ps-3">
-                            <UserRound className="size-4 text-ink-3" />
-                            <span className="hidden max-w-36 truncate text-sm font-semibold sm:inline">{user?.name}</span>
+                        <div className="flex h-10 items-center gap-1 rounded-full border border-line">
+                            <button className="flex h-10 items-center gap-2 rounded-s-full ps-1.5 pe-1 hover:bg-surface-2" onClick={() => setProfile(true)} title={t('spa.profil.titre')} aria-label={t('spa.profil.titre')}>
+                                <UserAvatar user={user} />
+                                <span className="hidden max-w-36 truncate text-sm font-semibold sm:inline">{user?.name}</span>
+                            </button>
                             <button className="btn btn-ghost min-h-9 rounded-full px-2.5" onClick={() => void logout()} title={t('spa.auth.deconnexion')} aria-label={t('spa.auth.deconnexion')}>
                                 <LogOut className="rtl:-scale-x-100" />
                             </button>
                         </div>
                     </div>
                 </header>
+                <ProfileDialog open={profile} onClose={() => setProfile(false)} />
 
                 <main className="min-h-0 flex-1 overflow-y-auto">
                     <div className="mx-auto max-w-[90rem] p-3 sm:p-5">
