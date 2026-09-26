@@ -5,8 +5,7 @@ namespace App\Filament\Pages;
 use App\Filament\Resources\InvoiceResource;
 use App\Models\Article;
 use App\Models\Client;
-use App\Models\Invoice;
-use App\Models\Payment;
+use App\Services\SaleService;
 use App\Support\Barcode;
 use App\Support\Money;
 use App\Support\ScanCart;
@@ -17,7 +16,6 @@ use Filament\Notifications\Actions\Action as NotificationAction;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Database\Eloquent\Collection;
-use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
 
 /**
@@ -355,46 +353,9 @@ class PointDeVente extends Page
         $montant = $this->montantEncaisse();
         $monnaie = $this->monnaie();
 
-        [$invoice, $payment] = DB::transaction(function () use ($lignes, $encaisser, $montant) {
-            $invoice = Invoice::create([
-                'numero' => Invoice::nextNumero(),
-                'date_facture' => now()->toDateString(),
-                'client_id' => $this->client_id,
-                'user_id' => auth()->id(),
-            ]);
-
-            // Each create() runs the InvoiceItemObserver: line totals, stock
-            // movement and audit trail happen there, exactly as in Ventes.
-            foreach ($lignes as $line) {
-                $invoice->items()->create([
-                    'article_id' => $line['article_id'],
-                    'designation' => $line['designation'],
-                    'quantite' => (float) $line['quantite'],
-                    'prix_unitaire' => (float) $line['prix_unitaire'],
-                    'remise' => (float) ($line['remise'] ?? 0),
-                    'tva' => (float) ($line['tva'] ?? 0),
-                ]);
-            }
-
-            $invoice->recalcTotals();
-            $invoice->refresh();
-
-            $payment = null;
-            $montant = min($montant, (float) $invoice->total_ttc);
-
-            if ($encaisser && $montant > 0) {
-                $payment = Payment::create([
-                    'invoice_id' => $invoice->id,
-                    'client_id' => $invoice->client_id,
-                    'user_id' => auth()->id(),
-                    'date_paiement' => now(),
-                    'montant' => $montant,
-                    'mode' => $this->mode,
-                ]);
-            }
-
-            return [$invoice, $payment];
-        });
+        // The sale itself is written by SaleService, shared with the API.
+        [$invoice, $payment] = app(SaleService::class)
+            ->enregistrer($lignes, $this->client_id, $encaisser, $montant, $this->mode);
 
         Notification::make()
             ->title(__('app.pos.vente_ok', ['numero' => $invoice->numero]))
