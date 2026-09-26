@@ -23,6 +23,10 @@
     font-display: swap;
 }
 
+/* Short screens (1366x768 with browser chrome): the checkout tightens so the
+   cart keeps room for its lines. */
+@custom-variant short (@media (max-height: 820px));
+
 @theme {
     --font-sans: 'Segoe UI', system-ui, -apple-system, 'Roboto', 'Helvetica Neue', Arial, sans-serif;
     --font-arabic: 'Tajawal', 'Segoe UI', system-ui, sans-serif;

@@ -1,6 +1,6 @@
 {
   "resources/css/app.css": {
-    "file": "assets/app-B6zOdOYL.css",
+    "file": "assets/app-CaGS5ExA.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -8,10 +8,43 @@
       "app.css"
     ]
   },
+  "resources/fonts/Tajawal-Bold.ttf": {
+    "file": "assets/Tajawal-Bold-fZxUUYvu.ttf",
+    "src": "resources/fonts/Tajawal-Bold.ttf"
+  },
+  "resources/fonts/Tajawal-Regular.ttf": {
+    "file": "assets/Tajawal-Regular-C8VBFyJm.ttf",
+    "src": "resources/fonts/Tajawal-Regular.ttf"
+  },
   "resources/js/app.js": {
     "file": "assets/app-DMsN-rLE.js",
     "name": "app",
     "src": "resources/js/app.js",
     "isEntry": true
+  },
+  "resources/react/features/pos/PosPage.tsx": {
+    "file": "assets/PosPage-Bh6mluNt.js",
+    "name": "PosPage",
+    "src": "resources/react/features/pos/PosPage.tsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/react/main.tsx"
+    ]
+  },
+  "resources/react/main.tsx": {
+    "file": "assets/main-CiX9oFHz.js",
+    "name": "main",
+    "src": "resources/react/main.tsx",
+    "isEntry": true,
+    "dynamicImports": [
+      "resources/react/features/pos/PosPage.tsx"
+    ],
+    "css": [
+      "assets/main-CFuiH0da.css"
+    ],
+    "assets": [
+      "assets/Tajawal-Regular-C8VBFyJm.ttf",
+      "assets/Tajawal-Bold-fZxUUYvu.ttf"
+    ]
   }
 }

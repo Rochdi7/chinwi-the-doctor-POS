@@ -13,7 +13,9 @@ interface DialogProps {
 
 /**
  * The native <dialog>: focus trap, Escape and the backdrop come from the
- * browser, so the till behaves the same whatever has focus.
+ * browser, so the till behaves the same whatever has focus. The element
+ * marked data-autofocus gets the focus (React's autoFocus does not set the
+ * attribute <dialog> looks for, so the browser would pick the first button).
  */
 export function Dialog({ open, onClose, title, description, children, footer, size = 'md' }: DialogProps) {
     const ref = useRef<HTMLDialogElement>(null);
@@ -21,7 +23,10 @@ export function Dialog({ open, onClose, title, description, children, footer, si
     useEffect(() => {
         const dialog = ref.current;
         if (!dialog) return;
-        if (open && !dialog.open) dialog.showModal();
+        if (open && !dialog.open) {
+            dialog.showModal();
+            dialog.querySelector<HTMLElement>('[data-autofocus]')?.focus();
+        }
         if (!open && dialog.open) dialog.close();
     }, [open]);
 

@@ -86,7 +86,7 @@ export default function PosPage() {
     );
 
     useKeyboardScanner(scanBox, onKeyboardScan);
-    const usb = usePhoneScans(handleScan, init.data?.usb);
+    const usb = usePhoneScans(handleScan, init.data?.usb, pairOpen);
 
     // ---- Saving the sale ---------------------------------------------------
 

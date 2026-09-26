@@ -1,4 +1,4 @@
-import { useEffect, useState, type RefObject } from 'react';
+11import { useEffect, useState, type RefObject } from 'react';
 import { ScanBarcode, Smartphone, LayoutDashboard, LogOut, CornerDownLeft, UserRound } from 'lucide-react';
 import { useSession, useSessionActions, useT } from '@/auth/session';
 import { LanguageSwitch } from '@/components/LanguageSwitch';

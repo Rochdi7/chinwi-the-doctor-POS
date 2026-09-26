@@ -59,7 +59,7 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
     return (
         <aside className="panel flex min-h-0 flex-col overflow-hidden">
             {/* ---- Header ---- */}
-            <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2.5">
+            <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2.5 short:py-1.5">
                 <h2 className="flex items-center gap-2 text-base font-extrabold">
                     <ShoppingBag className="size-5 text-brand" />
                     {t('pos.panier')}
@@ -109,7 +109,7 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
             </div>
 
             {/* ---- Totals (from Laravel) ---- */}
-            <div className={`space-y-1.5 border-t border-line bg-surface-2 px-4 py-2.5 transition-opacity ${apercuStale && !empty ? 'opacity-70' : ''}`}>
+            <div className={`space-y-1.5 border-t border-line bg-surface-2 px-4 py-2.5 short:py-1.5 transition-opacity ${apercuStale && !empty ? 'opacity-70' : ''}`}>
                 <div className="flex justify-between gap-4 text-xs text-ink-2">
                     <span>
                         {t('item.total_ht')} <span className="num font-semibold text-ink">{formatMoney(shown?.total_ht ?? 0, devise)}</span>
@@ -118,16 +118,16 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
                         {t('invoice.total_tva')} <span className="num font-semibold text-ink">{formatMoney(shown?.total_tva ?? 0, devise)}</span>
                     </span>
                 </div>
-                <div className="flex items-center justify-between gap-3 rounded-ctl bg-navy px-4 py-2.5 text-white">
+                <div className="flex items-center justify-between gap-3 rounded-ctl bg-navy px-4 py-2.5 short:py-1.5 text-white">
                     <span className="text-xs font-bold tracking-wider uppercase opacity-80 rtl:text-sm rtl:tracking-normal rtl:normal-case">{t('pos.total')}</span>
-                    <span className="num text-[1.9rem] leading-none font-extrabold tracking-tight whitespace-nowrap">
+                    <span className="num text-[1.9rem] short:text-[1.6rem] leading-none font-extrabold tracking-tight whitespace-nowrap">
                         {formatMoney(shown?.total_ttc ?? 0, devise)}
                     </span>
                 </div>
             </div>
 
             {/* ---- Payment ---- */}
-            <div className="space-y-2.5 border-t border-line px-4 pt-3 pb-4">
+            <div className="space-y-2.5 border-t border-line px-4 pt-3 pb-4 short:space-y-2 short:pt-2 short:pb-3">
                 <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
                     <label className="relative flex items-center">
                         <UserRound className="pointer-events-none absolute start-3 size-4 text-ink-3" />
@@ -162,16 +162,16 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
                     </div>
                 </div>
 
-                <div>
-                    <label htmlFor="montant-recu" className="mb-1 block text-xs font-bold tracking-wide text-ink-2 uppercase rtl:text-sm rtl:tracking-normal rtl:normal-case">
+                <div className="short:grid short:grid-cols-[auto_minmax(0,1fr)] short:items-center short:gap-x-3">
+                    <label htmlFor="montant-recu" className="mb-1 block short:mb-0 short:max-w-24 text-xs font-bold tracking-wide text-ink-2 uppercase rtl:text-sm rtl:tracking-normal rtl:normal-case">
                         {t('pos.montant_recu')} <span className="kbd ms-1 align-middle text-ink-3 normal-case">F4</span>
                     </label>
                     <div className="flex items-stretch overflow-hidden rounded-ctl border border-line-strong bg-surface focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/20">
                         <input
                             id="montant-recu"
                             ref={amountBox}
-                            className="num min-w-0 flex-1 bg-transparent px-3 text-2xl font-extrabold outline-none placeholder:font-semibold placeholder:text-ink-3"
-                            style={{ height: '3rem' }}
+                            className="num min-w-0 flex-1 bg-transparent px-3 text-2xl short:text-xl short:[--amount-h:2.6rem] font-extrabold outline-none placeholder:font-semibold placeholder:text-ink-3"
+                            style={{ height: 'var(--amount-h, 3rem)' }}
                             inputMode="decimal"
                             autoComplete="off"
                             value={montantRecu}
@@ -181,8 +181,8 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
                         />
                         <span className="grid place-items-center border-s border-line bg-surface-2 px-3 font-bold text-ink-2">{devise}</span>
                     </div>
-                    {!empty && shown && (
-                        <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {!empty && shown && !typed && (
+                        <div className="mt-1.5 flex flex-wrap gap-1.5 short:col-span-2">
                             {quickAmounts(shown.total_ttc).map((amount) => (
                                 <button
                                     key={amount}
@@ -195,7 +195,7 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
                             ))}
                         </div>
                     )}
-                    {!typed && <p className="mt-1 text-xs text-ink-3">{t('pos.montant_recu_aide')}</p>}
+                    {!typed && <p className="mt-1 text-xs text-ink-3 short:hidden">{t('pos.montant_recu_aide')}</p>}
                 </div>
 
                 {/* Change to hand back, or what is still owed: Laravel's figures. */}
@@ -214,7 +214,7 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
 
                 <button
                     type="button"
-                    className="btn btn-success min-h-[3.5rem] w-full justify-between px-4 text-lg font-extrabold shadow-[0_8px_18px_-10px_rgb(5_150_105/0.9)]"
+                    className="btn btn-success min-h-[3.5rem] short:min-h-12 w-full justify-between px-4 text-lg font-extrabold shadow-[0_8px_18px_-10px_rgb(5_150_105/0.9)]"
                     disabled={empty || busy}
                     onClick={onEncaisser}
                 >
@@ -226,7 +226,7 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
                     {!empty && shown && <span className="num rounded-md bg-black/15 px-2 py-1 text-base">{formatMoney(shown.total_ttc, devise)}</span>}
                 </button>
 
-                <button type="button" className="btn btn-secondary w-full" disabled={empty || busy} onClick={onEnregistrer}>
+                <button type="button" className="btn btn-secondary w-full short:min-h-10" disabled={empty || busy} onClick={onEnregistrer}>
                     <Clock3 />
                     {t('pos.sans_paiement')}
                 </button>
@@ -239,7 +239,7 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
                 title={`${t('pos.vider')} ?`}
                 footer={
                     <>
-                        <button className="btn btn-secondary" onClick={() => setConfirmClear(false)} autoFocus>✕</button>
+                        <button className="btn btn-secondary" onClick={() => setConfirmClear(false)} data-autofocus>✕</button>
                         <button
                             className="btn btn-primary bg-bad hover:bg-bad-ink"
                             onClick={() => {

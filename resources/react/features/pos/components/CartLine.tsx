@@ -32,7 +32,7 @@ export const CartLine = memo(function CartLine({ line, priced, stale, flash }: P
     const unit = priced?.prix_unitaire ?? line.prix_vente;
 
     return (
-        <li className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-line px-4 py-2.5 ${flash ? 'animate-flash' : ''}`}>
+        <li className={`grid grid-cols-[minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-line px-4 py-2.5 short:py-1.5 ${flash ? 'animate-flash' : ''}`}>
             <div className="min-w-0">
                 <p className="truncate font-bold">{line.designation}</p>
                 <p className="text-xs text-ink-2">
@@ -52,11 +52,11 @@ export const CartLine = memo(function CartLine({ line, priced, stale, flash }: P
             </button>
 
             <div className="flex items-center overflow-hidden rounded-ctl border border-line-strong bg-surface" dir="ltr">
-                <button type="button" onClick={() => moins(line.article_id)} title={t('pos.moins')} aria-label={t('pos.moins')} className="grid h-10 w-11 place-items-center bg-surface-2 text-ink hover:bg-brand-soft hover:text-brand active:bg-brand active:text-white">
+                <button type="button" onClick={() => moins(line.article_id)} title={t('pos.moins')} aria-label={t('pos.moins')} className="grid h-10 w-11 place-items-center bg-surface-2 text-ink hover:bg-brand-soft hover:text-brand active:bg-brand active:text-white short:h-9">
                     <Minus className="size-4" />
                 </button>
                 <input
-                    className="num h-10 w-14 border-x border-line bg-transparent text-center font-extrabold outline-none focus:bg-brand-soft"
+                    className="num h-10 w-14 short:h-9 border-x border-line bg-transparent text-center font-extrabold outline-none focus:bg-brand-soft"
                     inputMode="decimal"
                     value={draft}
                     aria-label={t('item.quantite')}
@@ -69,7 +69,7 @@ export const CartLine = memo(function CartLine({ line, priced, stale, flash }: P
                         }
                     }}
                 />
-                <button type="button" onClick={() => plus(line.article_id)} title={t('pos.plus')} aria-label={t('pos.plus')} className="grid h-10 w-11 place-items-center bg-surface-2 text-ink hover:bg-brand-soft hover:text-brand active:bg-brand active:text-white">
+                <button type="button" onClick={() => plus(line.article_id)} title={t('pos.plus')} aria-label={t('pos.plus')} className="grid h-10 w-11 place-items-center bg-surface-2 text-ink hover:bg-brand-soft hover:text-brand active:bg-brand active:text-white short:h-9">
                     <Plus className="size-4" />
                 </button>
             </div>

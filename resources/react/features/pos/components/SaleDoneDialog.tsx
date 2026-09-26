@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { CheckCircle2, FileText, Printer, ArrowRight } from 'lucide-react';
 import { useSession, useT } from '@/auth/session';
 import { Dialog } from '@/components/ui/Dialog';
@@ -18,7 +19,13 @@ export function SaleDoneDialog({ result, onClose }: { result: VenteResult | null
     const t = useT();
     const { devise } = useSession();
 
-    const open = (url: string) => window.open(url, '_blank', 'noopener');
+    const next = useRef<HTMLButtonElement>(null);
+
+    // After printing, Enter must still mean "next customer", not "print again".
+    const open = (url: string) => {
+        window.open(url, '_blank', 'noopener');
+        next.current?.focus();
+    };
 
     return (
         <Dialog open={result !== null} onClose={onClose} size="sm">
@@ -51,9 +58,9 @@ export function SaleDoneDialog({ result, onClose }: { result: VenteResult | null
                         )}
                         <button className="btn btn-secondary w-full" onClick={() => open(result.invoice.pdf_url)}>
                             <FileText />
-                            {t('invoice.print')}
+                            {t('invoice.print')} · {t('invoice.label')}
                         </button>
-                        <button className="btn btn-ghost w-full" onClick={onClose} autoFocus>
+                        <button ref={next} className="btn btn-ghost w-full" onClick={onClose} data-autofocus>
                             {t('pos.nouvelle_vente')}
                             <ArrowRight className="rtl:-scale-x-100" />
                             <span className="kbd">↵</span>
