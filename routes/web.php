@@ -1,5 +1,11 @@
 <?php
 
+use App\Http\Controllers\Api\ArticleController;
+use App\Http\Controllers\Api\BackOfficeController;
+use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ClientController;
+use App\Http\Controllers\Api\InvoiceController;
+use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PosController;
 use App\Http\Controllers\Api\SessionController;
 use App\Http\Controllers\ArticleLabelController;
@@ -37,6 +43,35 @@ Route::prefix('api')->name('api.')->group(function () {
         Route::get('/scans', [PosController::class, 'scans'])->name('scans');
         Route::post('/apercu', [PosController::class, 'apercu'])->name('apercu');
         Route::post('/ventes', [PosController::class, 'vente'])->name('vente');
+    });
+
+    // Back office (the screens the Filament panel used to provide).
+    Route::middleware('auth')->group(function () {
+        Route::get('/dashboard', [BackOfficeController::class, 'dashboard'])->name('dashboard');
+        Route::get('/dashboard/{key}', [BackOfficeController::class, 'dashboardDetail'])->name('dashboard.detail');
+
+        Route::get('/articles/nouveau', [ArticleController::class, 'nouveau'])->name('articles.nouveau');
+        Route::post('/articles/code-barre', [ArticleController::class, 'codeBarre'])->name('articles.code-barre');
+        Route::apiResource('articles', ArticleController::class);
+        Route::apiResource('categories', CategoryController::class)->except('show');
+
+        Route::get('/clients/options', [ClientController::class, 'options'])->name('clients.options');
+        Route::apiResource('clients', ClientController::class);
+
+        Route::get('/ventes/nouveau', [InvoiceController::class, 'nouveau'])->name('ventes.nouveau');
+        Route::post('/ventes/{invoice}/encaisser', [InvoiceController::class, 'encaisser'])->name('ventes.encaisser');
+        Route::apiResource('ventes', InvoiceController::class)->parameters(['ventes' => 'invoice']);
+
+        Route::apiResource('reglements', PaymentController::class)->only(['index', 'show', 'update', 'destroy'])->parameters(['reglements' => 'payment']);
+
+        Route::get('/caisse', [BackOfficeController::class, 'caisse'])->name('caisse');
+        Route::get('/journal', [BackOfficeController::class, 'journal'])->name('journal');
+        Route::get('/journal/evenements', [BackOfficeController::class, 'journalEvents'])->name('journal.events');
+        Route::get('/parametres', [BackOfficeController::class, 'settings'])->name('parametres');
+        Route::put('/parametres', [BackOfficeController::class, 'saveSettings'])->name('parametres.save');
+
+        Route::get('/scanner/till', [BackOfficeController::class, 'scannerTill'])->name('scanner.till');
+        Route::post('/scanner/envoyer', [BackOfficeController::class, 'scannerEnvoyer'])->name('scanner.envoyer');
     });
 });
 
