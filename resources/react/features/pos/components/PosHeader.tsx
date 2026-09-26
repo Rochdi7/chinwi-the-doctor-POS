@@ -1,4 +1,5 @@
 import { useEffect, useState, type RefObject } from 'react';
+import { Link } from 'react-router-dom';
 import { ScanBarcode, Smartphone, LayoutDashboard, LogOut, CornerDownLeft, UserRound } from 'lucide-react';
 import { useSession, useSessionActions, useT } from '@/auth/session';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
@@ -102,11 +103,11 @@ export function PosHeader({ scanBox, scan, onScanChange, usb, onPair }: Props) {
 
                 <LanguageSwitch compact />
 
-                {/* The Filament panel stays available during the migration. */}
-                <a className="btn btn-ghost min-h-10 px-3" href="/admin" title={t('spa.pos.gestion')}>
+                {/* Back office (dashboard, articles, ventes...). */}
+                <Link className="btn btn-ghost min-h-10 px-3" to="/" title={t('spa.pos.gestion')}>
                     <LayoutDashboard />
                     <span className="hidden 2xl:inline">{t('spa.pos.gestion')}</span>
-                </a>
+                </Link>
 
                 <div className="flex h-10 items-center gap-1 rounded-full border border-line ps-3">
                     <UserRound className="size-4 text-ink-3" />

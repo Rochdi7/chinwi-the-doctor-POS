@@ -15,10 +15,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetLocale::class,
         ]);
 
-        // The PDF and label URLs sit outside the panel but belong to it: a
-        // logged-out visitor is sent to the panel login, not to a missing
-        // "login" route.
-        $middleware->redirectGuestsTo(fn () => route('filament.admin.auth.login'));
+        // The PDF and label URLs belong to the app: a logged-out visitor is
+        // sent to the React login, not to a missing "login" route.
+        $middleware->redirectGuestsTo('/app/login');
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

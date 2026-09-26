@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from 'react';
-import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ApiError } from '@/lib/api';
 import { SessionProvider, sessionKey, useSession } from '@/auth/session';
@@ -8,6 +8,20 @@ import type { Session } from '@/types/api';
 import LoginPage from '@/pages/LoginPage';
 
 const PosPage = lazy(() => import('@/features/pos/PosPage'));
+const ScannerPage = lazy(() => import('@/pages/ScannerPage'));
+const AppLayout = lazy(() => import('@/layouts/AppLayout'));
+const DashboardPage = lazy(() => import('@/pages/DashboardPage'));
+const ArticlesPage = lazy(() => import('@/pages/ArticlesPage'));
+const CategoriesPage = lazy(() => import('@/pages/CategoriesPage'));
+const ClientsPage = lazy(() => import('@/pages/ClientsPage'));
+const ClientDetailPage = lazy(() => import('@/pages/ClientsPage').then((m) => ({ default: m.ClientDetailPage })));
+const VentesPage = lazy(() => import('@/pages/VentesPage'));
+const VenteDetailPage = lazy(() => import('@/pages/VentesPage').then((m) => ({ default: m.VenteDetailPage })));
+const VenteFormPage = lazy(() => import('@/pages/VentesPage').then((m) => ({ default: m.VenteFormPage })));
+const ReglementsPage = lazy(() => import('@/pages/RecordsPages').then((m) => ({ default: m.ReglementsPage })));
+const CaissePage = lazy(() => import('@/pages/RecordsPages').then((m) => ({ default: m.CaissePage })));
+const JournalPage = lazy(() => import('@/pages/RecordsPages').then((m) => ({ default: m.JournalPage })));
+const ParametresPage = lazy(() => import('@/pages/RecordsPages').then((m) => ({ default: m.ParametresPage })));
 
 /**
  * A request answered 401/419 means the Laravel session is gone (expired,
@@ -32,18 +46,22 @@ const queryClient = new QueryClient({
     },
 });
 
+/** Logged out: to the login page, remembering where to come back to. */
 function RequireAuth({ children }: { children: ReactNode }) {
     const { user } = useSession();
-    return user ? children : <Navigate to="/login" replace />;
+    const location = useLocation();
+    return user ? children : <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
 }
 
 function GuestOnly({ children }: { children: ReactNode }) {
     const { user } = useSession();
-    return user ? <Navigate to="/pos" replace /> : children;
+    const location = useLocation();
+    const from = (location.state as { from?: string } | null)?.from;
+    return user ? <Navigate to={from && from !== '/login' ? from : '/pos'} replace /> : children;
 }
 
 const loading = (
-    <div className="grid h-full place-items-center">
+    <div className="grid h-full min-h-60 place-items-center">
         <span className="spinner size-8 text-brand" />
     </div>
 );
@@ -56,8 +74,26 @@ export default function App() {
                     <Suspense fallback={loading}>
                         <Routes>
                             <Route path="/login" element={<GuestOnly><LoginPage /></GuestOnly>} />
+                            {/* Full-screen: the till and the phone scanner. */}
                             <Route path="/pos" element={<RequireAuth><PosPage /></RequireAuth>} />
-                            <Route path="*" element={<Navigate to="/pos" replace />} />
+                            <Route path="/scanner" element={<RequireAuth><ScannerPage /></RequireAuth>} />
+                            {/* Back office. */}
+                            <Route element={<RequireAuth><AppLayout /></RequireAuth>}>
+                                <Route index element={<Suspense fallback={loading}><DashboardPage /></Suspense>} />
+                                <Route path="/ventes" element={<Suspense fallback={loading}><VentesPage /></Suspense>} />
+                                <Route path="/ventes/nouvelle" element={<Suspense fallback={loading}><VenteFormPage /></Suspense>} />
+                                <Route path="/ventes/:id" element={<Suspense fallback={loading}><VenteDetailPage /></Suspense>} />
+                                <Route path="/ventes/:id/modifier" element={<Suspense fallback={loading}><VenteFormPage /></Suspense>} />
+                                <Route path="/reglements" element={<Suspense fallback={loading}><ReglementsPage /></Suspense>} />
+                                <Route path="/articles" element={<Suspense fallback={loading}><ArticlesPage /></Suspense>} />
+                                <Route path="/categories" element={<Suspense fallback={loading}><CategoriesPage /></Suspense>} />
+                                <Route path="/clients" element={<Suspense fallback={loading}><ClientsPage /></Suspense>} />
+                                <Route path="/clients/:id" element={<Suspense fallback={loading}><ClientDetailPage /></Suspense>} />
+                                <Route path="/caisse" element={<Suspense fallback={loading}><CaissePage /></Suspense>} />
+                                <Route path="/journal" element={<Suspense fallback={loading}><JournalPage /></Suspense>} />
+                                <Route path="/parametres" element={<Suspense fallback={loading}><ParametresPage /></Suspense>} />
+                            </Route>
+                            <Route path="*" element={<Navigate to="/" replace />} />
                         </Routes>
                     </Suspense>
                 </BrowserRouter>

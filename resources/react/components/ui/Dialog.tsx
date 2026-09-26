@@ -8,7 +8,7 @@ interface DialogProps {
     description?: ReactNode;
     children: ReactNode;
     footer?: ReactNode;
-    size?: 'sm' | 'md';
+    size?: 'sm' | 'md' | 'lg';
 }
 
 /**
@@ -41,7 +41,7 @@ export function Dialog({ open, onClose, title, description, children, footer, si
                 // A click on the backdrop lands on the <dialog> itself.
                 if (e.target === ref.current) onClose();
             }}
-            className={`m-auto w-[calc(100vw-2rem)] ${size === 'sm' ? 'max-w-md' : 'max-w-lg'} rounded-card border border-line bg-surface p-0 text-ink shadow-lift`}
+            className={`m-auto w-[calc(100vw-2rem)] ${{ sm: 'max-w-md', md: 'max-w-lg', lg: 'max-w-4xl' }[size]} rounded-card border border-line bg-surface p-0 text-ink shadow-lift`}
         >
             {open && (
                 <div className="flex max-h-[85dvh] flex-col">

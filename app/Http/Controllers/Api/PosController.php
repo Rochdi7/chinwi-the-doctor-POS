@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api;
 
-use App\Filament\Pages\ScannerTelephone;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Pos\ApercuRequest;
 use App\Http\Requests\Pos\VenteRequest;
@@ -46,8 +45,8 @@ class PosController extends Controller
             'categories' => Category::query()->orderBy('nom')->get(['id', 'nom']),
             'clients' => Client::query()->orderBy('raison_sociale')->limit(200)->get(['id', 'raison_sociale']),
             'till' => $till,
-            // The existing phone scanner page, pointed at this till.
-            'scanner_url' => ScannerTelephone::getUrl().'?till='.$till,
+            // The phone scanner page of the React app, pointed at this till.
+            'scanner_url' => url('/app/scanner').'?till='.$till,
             'usb' => $this->usb(),
         ]);
     }

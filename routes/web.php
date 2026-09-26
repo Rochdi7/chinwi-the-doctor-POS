@@ -15,7 +15,7 @@ use App\Http\Controllers\PaymentReceiptController;
 use App\Support\Locales;
 use Illuminate\Support\Facades\Route;
 
-Route::redirect('/', '/admin');
+Route::redirect('/', '/app');
 
 Route::get('/langue/{locale}', function (string $locale) {
     if (Locales::supported($locale)) {
