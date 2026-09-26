@@ -181,7 +181,9 @@ En production, le site est déjà en https : rien à faire.
 Le scanner doit rester en mode **clavier USB** (réglage d'usine) : la caisse lit
 ce qu'il « tape ». Ne pas activer le mode *Serial Emulation / port COM* que
 certains guides demandent pour d'autres logiciels : le scanner biperait et la
-caisse ne recevrait rien.
+caisse ne recevrait rien. Si c'est déjà le cas :
+`powershell -ExecutionPolicy Bypass -File .\deploy\scanner-mode-clavier.ps1`
+le remet en mode clavier sans imprimer de code.
 
 Le point de vente affiche l'état du scanner (connecté / non connecté / mode
 série / problème de pilote). Il le demande à Windows par PowerShell
@@ -193,6 +195,10 @@ fonctionne normalement.
 
 Autre marque de scanner : renseigner son identifiant USB dans `.env`, par
 exemple `SCANNER_USB_VID=VID_05E0` (Zebra/Symbol).
+
+> 📄 **Installation chez un client :** guide complet (branchement, voyant,
+> dépannage, remise en mode clavier) dans
+> [`deploy/SCANNER-USB.md`](deploy/SCANNER-USB.md).
 
 ### ⚡ Performance (caisse)
 
