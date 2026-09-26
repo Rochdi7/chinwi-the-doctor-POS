@@ -1,6 +1,8 @@
 <x-filament-panels::page>
     {{-- Styles live in public/css/pos.css (registered in AppServiceProvider)
-         so they are fetched once, not re-sent inside every Livewire update. --}}
+         so they are fetched once, not re-sent inside every Livewire update.
+         That stylesheet also hides Filament's page header on this page: the
+         compact .pos-bar below replaces it and reuses its actions. --}}
 
     @php
         $t = $this->totaux();
@@ -8,6 +10,8 @@
         $nbArticles = rtrim(rtrim(number_format($nbArticles, 2, '.', ''), '0'), '.');
         $vide = $panier === [];
         $usb = $this->scannerUsb();
+        $monnaie = $vide ? 0 : $this->monnaie();
+        $reste = $vide ? 0 : $this->reste();
     @endphp
 
     {{--
@@ -113,12 +117,36 @@
             <strong>SCAN DEBUG</strong>
             <template x-for="(line, i) in log" :key="i"><div x-text="line"></div></template>
         </div>
-        {{-- ============ Product grid (own component: not re-rendered by cart actions) ============ --}}
-        <livewire:pos-grille />
 
-        {{-- ============ Cart ============ --}}
-        <div class="pos-card pos-cart" wire:loading.class="pos-busy">
-            <div class="pos-cart-head">
+        {{-- ============ Workstation bar: identity, scan box, status, tools ============ --}}
+        <header class="pos-bar">
+            <div class="pos-bar-id">
+                <span class="pos-bar-logo"><x-filament::icon icon="heroicon-o-shopping-cart" /></span>
+                <div class="pos-bar-titles">
+                    <strong>{{ __('app.pos.label') }}</strong>
+                    <span>{{ \App\Models\Setting::get('societe_nom') }}</span>
+                </div>
+            </div>
+
+            {{-- Scans are caught page-wide (see the root x-data); this box
+                 is where they land by default and where a code is typed
+                 by hand, followed by Enter. --}}
+            <div class="pos-field pos-scanbox">
+                <x-filament::icon icon="heroicon-o-qr-code" />
+                <input
+                    type="text"
+                    x-ref="scan"
+                    class="pos-input pos-scan"
+                    wire:model="scan"
+                    placeholder="{{ __('app.scan.placeholder') }}"
+                    autocomplete="off"
+                    autofocus
+                    enterkeyhint="done"
+                />
+                <span class="pos-kbd">&#9166;</span>
+            </div>
+
+            <div class="pos-bar-status">
                 {{-- What Windows says about the USB scanner (App\Support\ScannerUsb).
                      Nothing is shown while unknown: a host that cannot be asked
                      must not look like a till with a broken scanner. --}}
@@ -131,27 +159,109 @@
                         @endif
                     </div>
                 @endif
-                {{-- Scans are caught page-wide (see the root x-data); this box
-                     is where they land by default and where a code is typed
-                     by hand, followed by Enter. --}}
-                <div class="pos-field scan">
-                    <x-filament::icon icon="heroicon-o-qr-code" />
-                    <input
-                        type="text"
-                        x-ref="scan"
-                        class="pos-input pos-scan"
-                        wire:model="scan"
-                        placeholder="{{ __('app.scan.placeholder') }}"
-                        autocomplete="off"
-                        autofocus
-                        enterkeyhint="done"
-                    />
-                    <span class="pos-kbd">&#9166;</span>
-                </div>
 
+                <span class="pos-meta" title="{{ auth()->user()?->email }}">
+                    <x-filament::icon icon="heroicon-m-user-circle" />
+                    {{ auth()->user()?->name }}
+                </span>
+
+                {{-- Wall clock, browser side only; Latin digits like every amount. --}}
+                <span
+                    class="pos-meta pos-num"
+                    wire:ignore
+                    x-data="{ now: '' }"
+                    x-init="
+                        const tick = () => now = new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                        tick();
+                        setInterval(tick, 15000);
+                    "
+                >
+                    <x-filament::icon icon="heroicon-m-clock" />
+                    <span x-text="now"></span>
+                </span>
+            </div>
+
+            <div class="pos-bar-tools">
+                {{-- The page's own header actions (PointDeVente::getHeaderActions),
+                     moved here because the Filament header is hidden. --}}
+                <button type="button" class="pos-tool" wire:click="mountAction('appairer')" title="{{ __('app.pos.appairer_titre') }}">
+                    <x-filament::icon icon="heroicon-o-device-phone-mobile" />
+                    <span>{{ __('app.pos.appairer') }}</span>
+                </button>
+                <a class="pos-tool" title="{{ __('app.pos.ventes') }}" href="{{ \App\Filament\Resources\InvoiceResource::getUrl('index') }}">
+                    <x-filament::icon icon="heroicon-o-document-text" />
+                    <span>{{ __('app.pos.ventes') }}</span>
+                </a>
+            </div>
+        </header>
+
+        {{-- ============ Product zone (own component: not re-rendered by cart actions) ============ --}}
+        <livewire:pos-grille />
+
+        {{-- ============ Checkout ============ --}}
+        <aside class="pos-panel pos-cart" wire:loading.class="pos-busy">
+            <div class="pos-cart-head">
+                <h3>
+                    <x-filament::icon icon="heroicon-o-shopping-bag" />
+                    {{ __('app.pos.panier') }}
+                    <span class="pos-badge {{ $vide ? '' : 'on' }}">{{ $nbArticles }}</span>
+                </h3>
+                <button type="button" class="pos-link" wire:click="vider" wire:confirm="{{ __('app.pos.vider') }} ?" @disabled($vide)>
+                    <x-filament::icon icon="heroicon-o-trash" />
+                    {{ __('app.pos.vider') }}
+                </button>
+            </div>
+
+            <div class="pos-lines">
+                @forelse ($panier as $key => $line)
+                    <div class="pos-line" wire:key="line-{{ $key }}">
+                        <div class="pos-line-info">
+                            <div class="pos-line-name">{{ $line['designation'] }}</div>
+                            <div class="pos-line-unit"><span class="pos-num">{{ \App\Support\Money::format($line['prix_unitaire']) }} &times; {{ rtrim(rtrim(number_format((float) $line['quantite'], 2, '.', ''), '0'), '.') }}</span></div>
+                        </div>
+
+                        <button type="button" class="pos-remove" wire:click="retirer('{{ $key }}')" title="{{ __('app.pos.retirer') }}">
+                            <x-filament::icon icon="heroicon-o-x-mark" />
+                        </button>
+
+                        <div class="pos-qty">
+                            <button type="button" wire:click="moins('{{ $key }}')" title="{{ __('app.pos.moins') }}">&minus;</button>
+                            <input
+                                type="number"
+                                step="any"
+                                min="0"
+                                value="{{ $line['quantite'] }}"
+                                wire:change="quantite('{{ $key }}', $event.target.value)"
+                                x-on:keydown.enter.prevent="$event.target.blur()"
+                            />
+                            <button type="button" wire:click="plus('{{ $key }}')" title="{{ __('app.pos.plus') }}">+</button>
+                        </div>
+
+                        <div class="pos-line-total"><span class="pos-num">{{ \App\Support\Money::format($this->ligneTotal($line)) }}</span></div>
+                    </div>
+                @empty
+                    <div class="pos-state">
+                        <span class="pos-state-icon"><x-filament::icon icon="heroicon-o-qr-code" /></span>
+                        <strong>{{ __('app.pos.panier_vide_titre') }}</strong>
+                        <span>{{ __('app.pos.panier_vide') }}</span>
+                    </div>
+                @endforelse
+            </div>
+
+            <div class="pos-summary">
+                <div class="pos-sum-row"><span>{{ __('app.item.total_ht') }}</span><span class="pos-num">{{ \App\Support\Money::format($t['ht']) }}</span></div>
+                <div class="pos-sum-row"><span>{{ __('app.invoice.total_tva') }}</span><span class="pos-num">{{ \App\Support\Money::format($t['tva']) }}</span></div>
+                <div class="pos-total">
+                    <span class="pos-total-label">{{ __('app.pos.total') }}</span>
+                    <span class="pos-total-value pos-num">{{ \App\Support\Money::format($t['ttc']) }}</span>
+                </div>
+            </div>
+
+            <div class="pos-checkout">
+                <div class="pos-who-how">
                 <div class="pos-field">
                     <x-filament::icon icon="heroicon-o-user" />
-                    <select class="pos-input" wire:model="client_id">
+                    <select class="pos-input" wire:model="client_id" aria-label="{{ __('app.invoice.client') }}">
                         <option value="">{{ __('app.vente.client_passage') }}</option>
                         @foreach ($this->clients as $c)
                             <option value="{{ $c->id }}">{{ $c->raison_sociale }}</option>
@@ -159,106 +269,66 @@
                     </select>
                 </div>
 
-                <div class="pos-cart-title">
-                    <h3>
-                        <x-filament::icon icon="heroicon-o-shopping-cart" />
-                        {{ __('app.pos.panier') }}
-                        <span class="pos-badge {{ $vide ? '' : 'on' }}">{{ $nbArticles }}</span>
-                    </h3>
-                    <button type="button" class="pos-link" wire:click="vider" wire:confirm="{{ __('app.pos.vider') }} ?" @disabled($vide)>
-                        <x-filament::icon icon="heroicon-o-trash" />
-                        {{ __('app.pos.vider') }}
-                    </button>
-                </div>
-            </div>
-
-            <div class="pos-lines">
-                @forelse ($panier as $key => $line)
-                    <div class="pos-line" wire:key="line-{{ $key }}">
-                        <div style="min-width: 0">
-                            <div class="pos-line-name">{{ $line['designation'] }}</div>
-                            <div class="pos-line-unit">{{ \App\Support\Money::format($line['prix_unitaire']) }} &times; {{ rtrim(rtrim(number_format((float) $line['quantite'], 2, '.', ''), '0'), '.') }}</div>
-                        </div>
-
-                        <div class="pos-line-right">
-                            <div class="pos-qty">
-                                <button type="button" wire:click="moins('{{ $key }}')" title="{{ __('app.pos.moins') }}">&minus;</button>
-                                <input
-                                    type="number"
-                                    step="any"
-                                    min="0"
-                                    value="{{ $line['quantite'] }}"
-                                    wire:change="quantite('{{ $key }}', $event.target.value)"
-                                    x-on:keydown.enter.prevent="$event.target.blur()"
-                                />
-                                <button type="button" wire:click="plus('{{ $key }}')" title="{{ __('app.pos.plus') }}">+</button>
-                            </div>
-                            <div class="pos-line-total">{{ \App\Support\Money::format($this->ligneTotal($line)) }}</div>
-                            <button type="button" class="pos-remove" wire:click="retirer('{{ $key }}')" title="{{ __('app.pos.retirer') }}">
-                                <x-filament::icon icon="heroicon-o-x-mark" />
-                            </button>
-                        </div>
-                    </div>
-                @empty
-                    <div class="pos-empty">
-                        <x-filament::icon icon="heroicon-o-qr-code" />
-                        <span>{{ __('app.pos.panier_vide') }}</span>
-                    </div>
-                @endforelse
-            </div>
-
-            <div class="pos-totals">
-                <div class="row"><span>{{ __('app.item.total_ht') }}</span><span>{{ \App\Support\Money::format($t['ht']) }}</span></div>
-                <div class="row"><span>{{ __('app.invoice.total_tva') }}</span><span>{{ \App\Support\Money::format($t['tva']) }}</span></div>
-                <div class="row grand"><span>{{ __('app.pos.total') }}</span><span>{{ \App\Support\Money::format($t['ttc']) }}</span></div>
-                @if (! $vide && $this->monnaie() > 0)
-                    <div class="row change"><span>{{ __('app.pos.monnaie') }}</span><span>{{ \App\Support\Money::format($this->monnaie()) }}</span></div>
-                @elseif (! $vide && $this->reste() > 0)
-                    <div class="row due"><span>{{ __('app.pos.reste') }}</span><span>{{ \App\Support\Money::format($this->reste()) }}</span></div>
-                @endif
-            </div>
-
-            <div class="pos-pay">
-                <div class="pos-modes">
-                    <button type="button" class="pos-mode {{ $mode === 'especes' ? 'on' : '' }}" wire:click="$set('mode', 'especes')">
+                <div class="pos-modes" role="radiogroup" aria-label="{{ __('app.pos.paiement') }}">
+                    <button type="button" role="radio" aria-checked="{{ $mode === 'especes' ? 'true' : 'false' }}" class="pos-mode {{ $mode === 'especes' ? 'on' : '' }}" wire:click="$set('mode', 'especes')">
                         <x-filament::icon icon="heroicon-o-banknotes" />
                         {{ __('app.mode.especes') }}
                     </button>
-                    <button type="button" class="pos-mode {{ $mode === 'tpe' ? 'on' : '' }}" wire:click="$set('mode', 'tpe')">
+                    <button type="button" role="radio" aria-checked="{{ $mode === 'tpe' ? 'true' : 'false' }}" class="pos-mode {{ $mode === 'tpe' ? 'on' : '' }}" wire:click="$set('mode', 'tpe')">
                         <x-filament::icon icon="heroicon-o-credit-card" />
                         {{ __('app.mode.tpe') }}
                     </button>
                 </div>
+                </div>
 
-                <div>
-                    <div class="pos-field">
-                        <x-filament::icon icon="heroicon-o-calculator" />
+                <label class="pos-received">
+                    <span class="pos-received-label">{{ __('app.pos.montant_recu') }}</span>
+                    <span class="pos-received-box">
                         <input
                             type="text"
                             inputmode="decimal"
-                            class="pos-input"
+                            class="pos-received-input"
                             wire:model.live.debounce.300ms="montant_recu"
-                            placeholder="{{ __('app.pos.montant_recu') }} ({{ \App\Support\Money::devise() }})"
+                            placeholder="{{ number_format($t['ttc'], 2, ',', ' ') }}"
                             autocomplete="off"
                         />
+                        <span class="pos-received-cur">{{ \App\Support\Money::devise() }}</span>
+                    </span>
+                    <span class="pos-hint">{{ __('app.pos.montant_recu_aide') }}</span>
+                </label>
+
+                @if ($monnaie > 0)
+                    <div class="pos-result is-change">
+                        <span>{{ __('app.pos.monnaie') }}</span>
+                        <strong class="pos-num">{{ \App\Support\Money::format($monnaie) }}</strong>
                     </div>
-                    <div class="pos-hint">{{ __('app.pos.montant_recu_aide') }}</div>
-                </div>
+                @elseif ($reste > 0)
+                    <div class="pos-result is-due">
+                        <span>{{ __('app.pos.reste') }}</span>
+                        <strong class="pos-num">{{ \App\Support\Money::format($reste) }}</strong>
+                    </div>
+                @endif
 
                 <div class="pos-actions">
                     <button type="button" class="pos-btn primary" wire:click="encaisser" wire:loading.attr="disabled" @disabled($vide)>
-                        <x-filament::icon icon="heroicon-o-check-circle" />
-                        <span>{{ __('app.pos.encaisser') }}</span>
+                        <span class="pos-btn-main" wire:loading.remove wire:target="encaisser">
+                            <x-filament::icon icon="heroicon-o-check-circle" />
+                            <span>{{ __('app.pos.encaisser') }}</span>
+                        </span>
+                        <span class="pos-btn-main" wire:loading.flex wire:target="encaisser">
+                            <span class="pos-spinner"></span>
+                            <span>{{ __('app.pos.traitement') }}</span>
+                        </span>
                         @unless ($vide)
-                            <span class="amt">&middot; {{ \App\Support\Money::format($t['ttc']) }}</span>
+                            <span class="amt pos-num">{{ \App\Support\Money::format($t['ttc']) }}</span>
                         @endunless
                     </button>
-                    <button type="button" class="pos-btn secondary" wire:click="enregistrer" wire:loading.attr="disabled" @disabled($vide) style="grid-column: 1 / -1">
+                    <button type="button" class="pos-btn secondary" wire:click="enregistrer" wire:loading.attr="disabled" @disabled($vide)>
                         <x-filament::icon icon="heroicon-o-clock" />
                         {{ __('app.pos.sans_paiement') }}
                     </button>
                 </div>
             </div>
-        </div>
+        </aside>
     </div>
 </x-filament-panels::page>

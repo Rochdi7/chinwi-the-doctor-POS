@@ -272,6 +272,10 @@ return [
         'montant_recu_aide' => 'خاوي = خلص كولشي. مبلغ أقل = تسبيق.',
     ],
     'pos' => [
+        'tous' => 'كولشي',
+        'panier_vide_titre' => 'الپانيي خاوي',
+        'paiement' => 'الخلاص',
+        'traitement' => 'كنسجلو…',
         'label' => 'الكيس ديال البيع',
         'recherche' => 'قلب على منتوج (السمية، المرجع، الكود)...',
         'toutes_categories' => 'كاع الفئات',

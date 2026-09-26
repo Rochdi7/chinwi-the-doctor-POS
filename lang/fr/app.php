@@ -272,6 +272,10 @@ return [
         'montant_recu_aide' => 'Vide = payé en totalité. Un montant plus petit = acompte.',
     ],
     'pos' => [
+        'tous' => 'Tous',
+        'panier_vide_titre' => 'Panier vide',
+        'paiement' => 'Paiement',
+        'traitement' => 'Enregistrement…',
         'label' => 'Point de vente',
         'recherche' => 'Chercher un article (nom, référence, code-barres)...',
         'toutes_categories' => 'Toutes les catégories',
