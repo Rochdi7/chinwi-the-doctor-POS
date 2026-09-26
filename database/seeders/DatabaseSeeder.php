@@ -12,10 +12,27 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        User::updateOrCreate(
+        User::firstOrCreate(
             ['email' => 'admin@local.test'],
             ['name' => 'Admin', 'password' => Hash::make('admin1234')],
         );
+
+        // Passwords live in .env only: this repo is public.
+        $accounts = [
+            ['email' => 'mehdi@gmail.com', 'name' => 'Mehdi', 'env' => 'SEED_MEHDI_PASSWORD'],
+            ['email' => 'caissier@gmail.com', 'name' => 'Caissier', 'env' => 'SEED_CAISSIER_PASSWORD'],
+        ];
+
+        foreach ($accounts as $account) {
+            $password = env($account['env']);
+
+            if ($password) {
+                User::firstOrCreate(
+                    ['email' => $account['email']],
+                    ['name' => $account['name'], 'password' => Hash::make($password)],
+                );
+            }
+        }
 
         Caisse::instance();
 
