@@ -145,7 +145,7 @@ class ArticleResource extends Resource
                 Forms\Components\TextInput::make('tva')
                     ->label(__('app.article.tva'))
                     ->numeric()
-                    ->default(20)
+                    ->default(fn () => \App\Models\Setting::tvaDefaut())
                     ->suffix('%'),
                 Forms\Components\Toggle::make('actif')
                     ->label(__('app.article.actif'))

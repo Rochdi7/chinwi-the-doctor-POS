@@ -52,6 +52,7 @@ Route::prefix('api')->name('api.')->group(function () {
 
         Route::get('/articles/nouveau', [ArticleController::class, 'nouveau'])->name('articles.nouveau');
         Route::post('/articles/code-barre', [ArticleController::class, 'codeBarre'])->name('articles.code-barre');
+        Route::get('/articles/lookup', [ArticleController::class, 'lookup'])->name('articles.lookup');
         Route::apiResource('articles', ArticleController::class);
         Route::apiResource('categories', CategoryController::class)->except('show');
 

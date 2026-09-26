@@ -4,11 +4,14 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Models\Setting;
 use App\Support\Barcode;
+use App\Support\ProductLookup;
 use App\Support\Units;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Articles, with the rules of the former Filament form (ArticleResource):
@@ -58,6 +61,7 @@ class ArticleController extends Controller
             'reference' => 'ART-'.str_pad((string) (Article::max('id') + 1), 4, '0', STR_PAD_LEFT),
             'code_barre' => Barcode::generate(),
             'unite' => 'Unite',
+            'tva' => Setting::tvaDefaut(),
             'unites' => $this->unites(null),
         ]);
     }
@@ -66,6 +70,26 @@ class ArticleController extends Controller
     public function codeBarre(): JsonResponse
     {
         return response()->json(['code_barre' => Barcode::generate()]);
+    }
+
+    /**
+     * Quick add: what a scanned code already is. Either the article that
+     * carries it, or a new-article draft with the name found online (if any).
+     */
+    public function lookup(Request $request): JsonResponse
+    {
+        $code = Barcode::normalizeScan($request->validate(['code' => ['required', 'string', 'max:64']])['code']);
+        $existing = Article::with('category:id,nom')->where('code_barre', $code)->first();
+
+        if ($existing) {
+            return response()->json(['code_barre' => $code, 'article' => $this->row($existing), 'suggestion' => null]);
+        }
+
+        if (preg_match('/^\d{13}$/', $code) && ! Barcode::isValidEan13($code)) {
+            throw ValidationException::withMessages(['code' => __('app.article.code_barre_checksum')]);
+        }
+
+        return response()->json(['code_barre' => $code, 'article' => null, 'suggestion' => ProductLookup::find($code)]);
     }
 
     public function show(Article $article): JsonResponse
@@ -123,7 +147,7 @@ class ArticleController extends Controller
         $data['code_barre'] = isset($data['code_barre']) && trim($data['code_barre']) !== '' ? trim($data['code_barre']) : null;
         $data['prix_achat'] ??= 0;
         $data['stock'] ??= 0;
-        $data['tva'] ??= 20;
+        $data['tva'] ??= Setting::tvaDefaut();
 
         return $data;
     }

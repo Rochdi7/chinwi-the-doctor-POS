@@ -48,7 +48,7 @@ class Parametres extends Page implements HasForms
             'societe_ice' => Setting::get('societe_ice'),
             'societe_rc' => Setting::get('societe_rc'),
             'devise' => Setting::get('devise', 'DH'),
-            'tva_defaut' => Setting::get('tva_defaut', '20'),
+            'tva_defaut' => Setting::get('tva_defaut', '0'),
         ]);
     }
 
@@ -64,7 +64,7 @@ class Parametres extends Page implements HasForms
                     Forms\Components\TextInput::make('societe_ice')->label('ICE'),
                     Forms\Components\TextInput::make('societe_rc')->label('RC'),
                     Forms\Components\TextInput::make('devise')->label('Devise / العملة')->default('DH'),
-                    Forms\Components\TextInput::make('tva_defaut')->label('TVA % / الضريبة')->numeric()->default(20),
+                    Forms\Components\TextInput::make('tva_defaut')->label('TVA % / الضريبة')->numeric()->default(0),
                 ])->columns(2),
             ])
             ->statePath('data');

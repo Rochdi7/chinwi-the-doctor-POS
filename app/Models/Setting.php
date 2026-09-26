@@ -23,6 +23,12 @@ class Setting extends Model
         return static::memo()[$key] ?? $default;
     }
 
+    /** VAT rate a new article starts with (Paramètres); 0 % unless changed. */
+    public static function tvaDefaut(): float
+    {
+        return (float) (static::get('tva_defaut') ?? 0);
+    }
+
     public static function put(string $key, $value): void
     {
         static::updateOrCreate(['key' => $key], ['value' => $value]);

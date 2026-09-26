@@ -41,4 +41,10 @@ return [
         'vid' => env('SCANNER_USB_VID', 'VID_0C2E'),
     ],
 
+    // Online name lookup for a scanned manufacturer barcode (quick add).
+    // Set PRODUCT_LOOKUP=false on a till with no internet access.
+    'product_lookup' => [
+        'enabled' => env('PRODUCT_LOOKUP', true),
+    ],
+
 ];
