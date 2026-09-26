@@ -1,35 +1,35 @@
 {
-  "_AlertsBell-CTilEiIn.js": {
-    "file": "assets/AlertsBell-CTilEiIn.js",
+  "_AlertsBell-D9KHM1tu.js": {
+    "file": "assets/AlertsBell-D9KHM1tu.js",
     "name": "AlertsBell",
     "imports": [
       "resources/react/main.tsx",
       "_format-SCDEg0lq.js"
     ]
   },
-  "_Dialog-Z7nxW8cg.js": {
-    "file": "assets/Dialog-Z7nxW8cg.js",
+  "_Dialog-C3amNwHn.js": {
+    "file": "assets/Dialog-C3amNwHn.js",
     "name": "Dialog",
     "imports": [
       "resources/react/main.tsx"
     ]
   },
-  "_arrow-left-n2m7kJDv.js": {
-    "file": "assets/arrow-left-n2m7kJDv.js",
+  "_arrow-left-Bbtai3i2.js": {
+    "file": "assets/arrow-left-Bbtai3i2.js",
     "name": "arrow-left",
     "imports": [
       "resources/react/main.tsx"
     ]
   },
-  "_banknote-CByaA3_Q.js": {
-    "file": "assets/banknote-CByaA3_Q.js",
+  "_banknote-DZEbBblW.js": {
+    "file": "assets/banknote-DZEbBblW.js",
     "name": "banknote",
     "imports": [
       "resources/react/main.tsx"
     ]
   },
-  "_credit-card-DZVB9tIV.js": {
-    "file": "assets/credit-card-DZVB9tIV.js",
+  "_credit-card-UxWMg7N1.js": {
+    "file": "assets/credit-card-UxWMg7N1.js",
     "name": "credit-card",
     "imports": [
       "resources/react/main.tsx"
@@ -39,81 +39,81 @@
     "file": "assets/format-SCDEg0lq.js",
     "name": "format"
   },
-  "_misc-C74e1TCT.js": {
-    "file": "assets/misc-C74e1TCT.js",
+  "_misc-CNSdcJbt.js": {
+    "file": "assets/misc-CNSdcJbt.js",
     "name": "misc",
     "imports": [
       "resources/react/main.tsx",
       "_format-SCDEg0lq.js",
-      "_Dialog-Z7nxW8cg.js"
+      "_Dialog-C3amNwHn.js"
     ]
   },
-  "_pencil-DqwM6fyt.js": {
-    "file": "assets/pencil-DqwM6fyt.js",
+  "_pencil-C25OGLHm.js": {
+    "file": "assets/pencil-C25OGLHm.js",
     "name": "pencil",
     "imports": [
       "resources/react/main.tsx"
     ]
   },
-  "_plus-z8_-OQOz.js": {
-    "file": "assets/plus-z8_-OQOz.js",
+  "_plus-BSZOwKVG.js": {
+    "file": "assets/plus-BSZOwKVG.js",
     "name": "plus",
     "imports": [
       "resources/react/main.tsx"
     ]
   },
-  "_queries-CwTQvGZ_.js": {
-    "file": "assets/queries-CwTQvGZ_.js",
+  "_queries-CJiYsx30.js": {
+    "file": "assets/queries-CJiYsx30.js",
     "name": "queries",
     "imports": [
       "resources/react/main.tsx",
-      "_useMutation-B9m4RqeC.js"
+      "_useMutation-0g1RlSym.js"
     ]
   },
-  "_scan-barcode-CSYSZ7sY.js": {
-    "file": "assets/scan-barcode-CSYSZ7sY.js",
+  "_scan-barcode-lkomNfA7.js": {
+    "file": "assets/scan-barcode-lkomNfA7.js",
     "name": "scan-barcode",
     "imports": [
       "resources/react/main.tsx"
     ]
   },
-  "_shopping-cart-BaubXnRZ.js": {
-    "file": "assets/shopping-cart-BaubXnRZ.js",
+  "_shopping-cart-Cegm8zUj.js": {
+    "file": "assets/shopping-cart-Cegm8zUj.js",
     "name": "shopping-cart",
     "imports": [
       "resources/react/main.tsx"
     ]
   },
-  "_useDebounced-DZfhJ7f4.js": {
-    "file": "assets/useDebounced-DZfhJ7f4.js",
+  "_useDebounced-OShj4aze.js": {
+    "file": "assets/useDebounced-OShj4aze.js",
     "name": "useDebounced",
     "imports": [
       "resources/react/main.tsx"
     ]
   },
-  "_useListParams-D-A3nas8.js": {
-    "file": "assets/useListParams-D-A3nas8.js",
+  "_useListParams-DMMp6Pt5.js": {
+    "file": "assets/useListParams-DMMp6Pt5.js",
     "name": "useListParams",
     "imports": [
       "resources/react/main.tsx"
     ]
   },
-  "_useMutation-B9m4RqeC.js": {
-    "file": "assets/useMutation-B9m4RqeC.js",
+  "_useMutation-0g1RlSym.js": {
+    "file": "assets/useMutation-0g1RlSym.js",
     "name": "useMutation",
     "imports": [
       "resources/react/main.tsx"
     ]
   },
-  "_wallet-hS1kra7i.js": {
-    "file": "assets/wallet-hS1kra7i.js",
+  "_wallet-C8GDCbe7.js": {
+    "file": "assets/wallet-C8GDCbe7.js",
     "name": "wallet",
     "imports": [
       "resources/react/main.tsx"
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-DDTv161W.css",
+    "file": "assets/app-BwlFrp7r.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -140,39 +140,39 @@
     "isEntry": true
   },
   "resources/react/features/pos/PosPage.tsx": {
-    "file": "assets/PosPage-DGrqf2nn.js",
+    "file": "assets/PosPage-D-kCWisB.js",
     "name": "PosPage",
     "src": "resources/react/features/pos/PosPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/react/main.tsx",
       "_format-SCDEg0lq.js",
-      "_useMutation-B9m4RqeC.js",
-      "_useDebounced-DZfhJ7f4.js",
-      "_AlertsBell-CTilEiIn.js",
-      "_scan-barcode-CSYSZ7sY.js",
-      "_plus-z8_-OQOz.js",
-      "_Dialog-Z7nxW8cg.js",
-      "_banknote-CByaA3_Q.js",
-      "_credit-card-DZVB9tIV.js"
+      "_useMutation-0g1RlSym.js",
+      "_useDebounced-OShj4aze.js",
+      "_AlertsBell-D9KHM1tu.js",
+      "_scan-barcode-lkomNfA7.js",
+      "_plus-BSZOwKVG.js",
+      "_Dialog-C3amNwHn.js",
+      "_banknote-DZEbBblW.js",
+      "_credit-card-UxWMg7N1.js"
     ]
   },
   "resources/react/layouts/AppLayout.tsx": {
-    "file": "assets/AppLayout-BNt-JLq_.js",
+    "file": "assets/AppLayout--QYPdh5s.js",
     "name": "AppLayout",
     "src": "resources/react/layouts/AppLayout.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/react/main.tsx",
-      "_AlertsBell-CTilEiIn.js",
-      "_shopping-cart-BaubXnRZ.js",
-      "_banknote-CByaA3_Q.js",
-      "_wallet-hS1kra7i.js",
+      "_AlertsBell-D9KHM1tu.js",
+      "_shopping-cart-Cegm8zUj.js",
+      "_banknote-DZEbBblW.js",
+      "_wallet-C8GDCbe7.js",
       "_format-SCDEg0lq.js"
     ]
   },
   "resources/react/main.tsx": {
-    "file": "assets/main-Bt04HcGL.js",
+    "file": "assets/main-Bj54Fuqa.js",
     "name": "main",
     "src": "resources/react/main.tsx",
     "isEntry": true,
@@ -202,109 +202,109 @@
     ]
   },
   "resources/react/pages/ArticlesPage.tsx": {
-    "file": "assets/ArticlesPage-ucdWhbE7.js",
+    "file": "assets/ArticlesPage-DDwgmqfL.js",
     "name": "ArticlesPage",
     "src": "resources/react/pages/ArticlesPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/react/main.tsx",
-      "_useListParams-D-A3nas8.js",
-      "_useDebounced-DZfhJ7f4.js",
-      "_queries-CwTQvGZ_.js",
-      "_Dialog-Z7nxW8cg.js",
-      "_misc-C74e1TCT.js",
+      "_useListParams-DMMp6Pt5.js",
+      "_useDebounced-OShj4aze.js",
+      "_queries-CJiYsx30.js",
+      "_Dialog-C3amNwHn.js",
+      "_misc-CNSdcJbt.js",
       "_format-SCDEg0lq.js",
-      "_scan-barcode-CSYSZ7sY.js",
-      "_plus-z8_-OQOz.js",
-      "_useMutation-B9m4RqeC.js"
+      "_scan-barcode-lkomNfA7.js",
+      "_plus-BSZOwKVG.js",
+      "_useMutation-0g1RlSym.js"
     ]
   },
   "resources/react/pages/CategoriesPage.tsx": {
-    "file": "assets/CategoriesPage-B28H99LG.js",
+    "file": "assets/CategoriesPage-DOssgaSo.js",
     "name": "CategoriesPage",
     "src": "resources/react/pages/CategoriesPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/react/main.tsx",
-      "_queries-CwTQvGZ_.js",
-      "_Dialog-Z7nxW8cg.js",
-      "_misc-C74e1TCT.js",
-      "_pencil-DqwM6fyt.js",
-      "_plus-z8_-OQOz.js",
-      "_useMutation-B9m4RqeC.js",
+      "_queries-CJiYsx30.js",
+      "_Dialog-C3amNwHn.js",
+      "_misc-CNSdcJbt.js",
+      "_pencil-C25OGLHm.js",
+      "_plus-BSZOwKVG.js",
+      "_useMutation-0g1RlSym.js",
       "_format-SCDEg0lq.js"
     ]
   },
   "resources/react/pages/ClientsPage.tsx": {
-    "file": "assets/ClientsPage-DAal7QZ-.js",
+    "file": "assets/ClientsPage-BnfZ6y71.js",
     "name": "ClientsPage",
     "src": "resources/react/pages/ClientsPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/react/main.tsx",
-      "_useListParams-D-A3nas8.js",
-      "_useDebounced-DZfhJ7f4.js",
-      "_queries-CwTQvGZ_.js",
-      "_Dialog-Z7nxW8cg.js",
-      "_misc-C74e1TCT.js",
-      "_plus-z8_-OQOz.js",
-      "_arrow-left-n2m7kJDv.js",
-      "_pencil-DqwM6fyt.js",
-      "_useMutation-B9m4RqeC.js",
+      "_useListParams-DMMp6Pt5.js",
+      "_useDebounced-OShj4aze.js",
+      "_queries-CJiYsx30.js",
+      "_Dialog-C3amNwHn.js",
+      "_misc-CNSdcJbt.js",
+      "_plus-BSZOwKVG.js",
+      "_arrow-left-Bbtai3i2.js",
+      "_pencil-C25OGLHm.js",
+      "_useMutation-0g1RlSym.js",
       "_format-SCDEg0lq.js"
     ]
   },
   "resources/react/pages/DashboardPage.tsx": {
-    "file": "assets/DashboardPage-D_TXNDUO.js",
+    "file": "assets/DashboardPage-PWPmJ2oj.js",
     "name": "DashboardPage",
     "src": "resources/react/pages/DashboardPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/react/main.tsx",
-      "_Dialog-Z7nxW8cg.js",
-      "_misc-C74e1TCT.js",
-      "_wallet-hS1kra7i.js",
-      "_shopping-cart-BaubXnRZ.js",
+      "_Dialog-C3amNwHn.js",
+      "_misc-CNSdcJbt.js",
+      "_wallet-C8GDCbe7.js",
+      "_shopping-cart-Cegm8zUj.js",
       "_format-SCDEg0lq.js"
     ]
   },
   "resources/react/pages/RecordsPages.tsx": {
-    "file": "assets/RecordsPages-CdiBa95e.js",
+    "file": "assets/RecordsPages-BlSOCdp7.js",
     "name": "RecordsPages",
     "src": "resources/react/pages/RecordsPages.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/react/main.tsx",
-      "_useListParams-D-A3nas8.js",
-      "_useDebounced-DZfhJ7f4.js",
-      "_queries-CwTQvGZ_.js",
+      "_useListParams-DMMp6Pt5.js",
+      "_useDebounced-OShj4aze.js",
+      "_queries-CJiYsx30.js",
       "_format-SCDEg0lq.js",
-      "_Dialog-Z7nxW8cg.js",
-      "_misc-C74e1TCT.js",
-      "_pencil-DqwM6fyt.js",
-      "_useMutation-B9m4RqeC.js"
+      "_Dialog-C3amNwHn.js",
+      "_misc-CNSdcJbt.js",
+      "_pencil-C25OGLHm.js",
+      "_useMutation-0g1RlSym.js"
     ]
   },
   "resources/react/pages/VentesPage.tsx": {
-    "file": "assets/VentesPage-B2CuVQvy.js",
+    "file": "assets/VentesPage-Ch2bX28-.js",
     "name": "VentesPage",
     "src": "resources/react/pages/VentesPage.tsx",
     "isDynamicEntry": true,
     "imports": [
       "resources/react/main.tsx",
-      "_useListParams-D-A3nas8.js",
-      "_useDebounced-DZfhJ7f4.js",
-      "_queries-CwTQvGZ_.js",
+      "_useListParams-DMMp6Pt5.js",
+      "_useDebounced-OShj4aze.js",
+      "_queries-CJiYsx30.js",
       "_format-SCDEg0lq.js",
-      "_Dialog-Z7nxW8cg.js",
-      "_misc-C74e1TCT.js",
-      "_banknote-CByaA3_Q.js",
-      "_shopping-cart-BaubXnRZ.js",
-      "_plus-z8_-OQOz.js",
-      "_arrow-left-n2m7kJDv.js",
-      "_pencil-DqwM6fyt.js",
-      "_credit-card-DZVB9tIV.js",
-      "_useMutation-B9m4RqeC.js"
+      "_Dialog-C3amNwHn.js",
+      "_misc-CNSdcJbt.js",
+      "_banknote-DZEbBblW.js",
+      "_shopping-cart-Cegm8zUj.js",
+      "_plus-BSZOwKVG.js",
+      "_arrow-left-Bbtai3i2.js",
+      "_pencil-C25OGLHm.js",
+      "_credit-card-UxWMg7N1.js",
+      "_useMutation-0g1RlSym.js"
     ]
   }
 }

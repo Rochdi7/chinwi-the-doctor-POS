@@ -131,7 +131,7 @@ export function Combobox({ value, onChange, options, placeholder = '—', cleara
                     ref={panel}
                     role="listbox"
                     onKeyDown={onKey}
-                    className="fixed z-[100] flex flex-col overflow-hidden rounded-card border border-line bg-surface shadow-lift"
+                    className="fixed z-[100] flex flex-col overflow-hidden rounded-card border border-line bg-surface text-ink shadow-lift"
                     style={{ left: pos.left, width: pos.width, maxHeight: 320, ...(pos.up ? { bottom: window.innerHeight - pos.top } : { top: pos.top }) }}
                 >
                     {searchable && (
