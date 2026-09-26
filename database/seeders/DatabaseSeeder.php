@@ -26,12 +26,18 @@ class DatabaseSeeder extends Seeder
         foreach ($accounts as $account) {
             $password = env($account['env']);
 
-            if ($password) {
-                User::firstOrCreate(
-                    ['email' => $account['email']],
-                    ['name' => $account['name'], 'password' => Hash::make($password)],
-                );
+            if (! $password) {
+                $this->command?->warn("{$account['email']} skipped: {$account['env']} is not set in .env");
+
+                continue;
             }
+
+            $user = User::firstOrCreate(
+                ['email' => $account['email']],
+                ['name' => $account['name'], 'password' => Hash::make($password)],
+            );
+
+            $this->command?->info($account['email'].($user->wasRecentlyCreated ? ' created' : ' already exists'));
         }
 
         Caisse::instance();
