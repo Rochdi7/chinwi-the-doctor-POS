@@ -8,7 +8,7 @@
     [$nom1, $nom2] = array_pad(explode(' ', $nom, 2), 2, '');
 @endphp
 <!DOCTYPE html>
-<html>
+<html lang="{{ app()->getLocale() }}" dir="rtl">
 <head>
     <meta charset="utf-8">
     <title>{{ $t('titre') }} {{ $invoice->numero }}</title>
@@ -108,7 +108,7 @@
             <table class="box"><tr><td class="numbox">
                 {{ $t('numero') }} <span class="ltr">{{ $invoice->numero }}</span><br>
                 <span style="font-weight:normal">{{ $t('date') }} :</span> <span class="ltr">{{ $invoice->date_facture->format('d / m / Y') }}</span>
-                @if($invoice->bc_client)<br><span style="font-weight:normal">BC :</span> <span class="ltr">{{ $invoice->bc_client }}</span>@endif
+                @if($invoice->bc_client)<br><span style="font-weight:normal">{{ $t('bc') }} :</span> <span class="ltr">{{ $invoice->bc_client }}</span>@endif
             </td></tr></table>
         </td>
     </tr>
@@ -134,13 +134,13 @@
 <table class="items">
     <thead>
     <tr>
-        <th width="5%">N°</th>
+        <th width="5%">{{ $t('num_col') }}</th>
         <th>{{ $t('designation') }}</th>
         <th width="9%">{{ $t('qte_long') }}</th>
-        <th width="12%">{{ $t('pu') }}<br>(HT)</th>
-        <th width="12%">{{ $t('prix_total') }}<br>(HT)</th>
+        <th width="12%">{{ $t('pu') }}<br>{{ $t('ht') }}</th>
+        <th width="12%">{{ $t('prix_total') }}<br>{{ $t('ht') }}</th>
         <th width="9%">{{ $t('tva') }}</th>
-        <th width="13%">{{ $t('prix_total') }}<br>(TTC)</th>
+        <th width="13%">{{ $t('prix_total') }}<br>{{ $t('ttc') }}</th>
     </tr>
     </thead>
     <tbody>

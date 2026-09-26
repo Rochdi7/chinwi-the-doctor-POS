@@ -17,6 +17,8 @@ const TOLERANCE = 40;
 export interface PreparedImage {
     blob: Blob;
     previewUrl: string;
+    /** true: background removed; false: asked but the photo was too busy; null: not asked. */
+    bgRemoved: boolean | null;
 }
 
 async function load(file: Blob): Promise<HTMLImageElement> {
@@ -101,9 +103,14 @@ function removeBackground(c: HTMLCanvasElement): { canvas: HTMLCanvasElement; bo
     return { canvas: c, box: [x0, y0, x1 - x0 + 1, y1 - y0 + 1] };
 }
 
-/** Square PNG, product centred with a little air around it. */
+/**
+ * Square PNG. A cut-out is centred with a little air around it; a photo
+ * that kept its background is cropped to its centre square instead, so the
+ * tile never shows transparent bars beside a portrait photo.
+ */
 function square(c: HTMLCanvasElement, box: [number, number, number, number] | null): HTMLCanvasElement {
-    const [sx, sy, sw, sh] = box ?? [0, 0, c.width, c.height];
+    const side = Math.min(c.width, c.height);
+    const [sx, sy, sw, sh] = box ?? [(c.width - side) / 2, (c.height - side) / 2, side, side];
     const out = document.createElement('canvas');
     out.width = out.height = OUTPUT;
     const ctx = out.getContext('2d')!;
@@ -126,5 +133,5 @@ export async function prepareProductImage(file: Blob, removeBg: boolean): Promis
     const work = draw(img);
     const { canvas, box } = removeBg ? removeBackground(work) : { canvas: work, box: null };
     const blob = await toBlob(square(canvas, box));
-    return { blob, previewUrl: URL.createObjectURL(blob) };
+    return { blob, previewUrl: URL.createObjectURL(blob), bgRemoved: removeBg ? box !== null : null };
 }

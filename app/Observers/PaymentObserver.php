@@ -41,7 +41,7 @@ class PaymentObserver extends AuditObserver
             Caisse::mouvement(
                 'sortie',
                 (float) $payment->montant,
-                'Annulation règlement #'.$payment->id,
+                __('app.caisse.annulation_reglement', ['id' => $payment->id]),
             );
         }
 

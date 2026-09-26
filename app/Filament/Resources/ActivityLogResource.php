@@ -122,8 +122,8 @@ class ActivityLogResource extends Resource
                         ->all()),
                 Tables\Filters\Filter::make('occurred_at')
                     ->form([
-                        \Filament\Forms\Components\DatePicker::make('from')->label('Du'),
-                        \Filament\Forms\Components\DatePicker::make('until')->label('Au'),
+                        \Filament\Forms\Components\DatePicker::make('from')->label(__('app.spa.ui.du')),
+                        \Filament\Forms\Components\DatePicker::make('until')->label(__('app.spa.ui.au')),
                     ])
                     ->query(fn ($query, array $data) => $query
                         ->when($data['from'] ?? null, fn ($q, $d) => $q->whereDate('occurred_at', '>=', $d))

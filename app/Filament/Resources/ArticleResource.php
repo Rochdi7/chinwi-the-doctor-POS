@@ -133,12 +133,12 @@ class ArticleResource extends Resource
                     ->numeric()
                     ->required()
                     ->default(0)
-                    ->suffix('DH'),
+                    ->suffix(Money::devise()),
                 Forms\Components\TextInput::make('prix_achat')
                     ->label(__('app.article.prix_achat'))
                     ->numeric()
                     ->default(0)
-                    ->suffix('DH'),
+                    ->suffix(Money::devise()),
                 Forms\Components\TextInput::make('stock')
                     ->label(__('app.article.stock'))
                     ->numeric()

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Article;
+use App\Models\Category;
 use App\Models\Client;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
@@ -28,6 +29,7 @@ class AppServiceProvider extends ServiceProvider
 
         Client::observe(AuditObserver::class);
         Article::observe(AuditObserver::class);
+        Category::observe(AuditObserver::class);
         Invoice::observe(AuditObserver::class);
         InvoiceItem::observe(InvoiceItemObserver::class);
         Payment::observe(PaymentObserver::class);

@@ -84,7 +84,7 @@ export function AlertsBell() {
                                             </li>
                                         ))}
                                     </ul>
-                                    <Link to="/ventes?statut=validee" onClick={() => setOpen(false)} className="mt-1 block px-2 text-xs font-semibold text-brand">{t('spa.alertes.voir_tout')} →</Link>
+                                    <Link to="/ventes?statut=validee" onClick={() => setOpen(false)} className="mt-1 block px-2 text-xs font-semibold text-brand">{t('spa.alertes.voir_tout')} <span className="inline-block rtl:-scale-x-100">→</span></Link>
                                 </section>
                             )}
                             {a.ruptures.count > 0 && (
@@ -101,7 +101,7 @@ export function AlertsBell() {
                                             </li>
                                         ))}
                                     </ul>
-                                    <Link to="/articles?stock=rupture" onClick={() => setOpen(false)} className="mt-1 block px-2 text-xs font-semibold text-brand">{t('spa.alertes.voir_tout')} →</Link>
+                                    <Link to="/articles?stock=rupture" onClick={() => setOpen(false)} className="mt-1 block px-2 text-xs font-semibold text-brand">{t('spa.alertes.voir_tout')} <span className="inline-block rtl:-scale-x-100">→</span></Link>
                                 </section>
                             )}
                             {a.stock_bas.count > 0 && (
@@ -118,7 +118,7 @@ export function AlertsBell() {
                                             </li>
                                         ))}
                                     </ul>
-                                    <Link to="/articles?stock=bas" onClick={() => setOpen(false)} className="mt-1 block px-2 text-xs font-semibold text-brand">{t('spa.alertes.voir_tout')} →</Link>
+                                    <Link to="/articles?stock=bas" onClick={() => setOpen(false)} className="mt-1 block px-2 text-xs font-semibold text-brand">{t('spa.alertes.voir_tout')} <span className="inline-block rtl:-scale-x-100">→</span></Link>
                                 </section>
                             )}
                         </div>

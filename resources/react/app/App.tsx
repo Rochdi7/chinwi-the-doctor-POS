@@ -4,6 +4,7 @@ import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@ta
 import { ApiError } from '@/lib/api';
 import { SessionProvider, sessionKey, useSession } from '@/auth/session';
 import { Toaster } from '@/components/ui/toast';
+import { LiveSync } from '@/lib/sync';
 import type { Session } from '@/types/api';
 import LoginPage from '@/pages/LoginPage';
 
@@ -69,6 +70,8 @@ export default function App() {
     return (
         <QueryClientProvider client={queryClient}>
             <SessionProvider>
+                {/* Same account on several devices: what one changes, the others show. */}
+                <LiveSync />
                 <BrowserRouter basename="/app">
                     <Suspense fallback={loading}>
                         <Routes>

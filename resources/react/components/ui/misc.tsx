@@ -11,7 +11,7 @@ export function PageHeader({ title, subtitle, actions }: { title: ReactNode; sub
     return (
         <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
             <div className="min-w-0">
-                <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>
+                <h1 className="text-2xl font-extrabold tracking-tight rtl:tracking-normal">{title}</h1>
                 {subtitle && <p className="mt-0.5 text-sm text-ink-2">{subtitle}</p>}
             </div>
             {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
@@ -38,7 +38,7 @@ export function SearchBox({ value, onChange, placeholder }: { value: string; onC
                 aria-label={placeholder ?? t('spa.ui.rechercher')}
             />
             {value && (
-                <button type="button" className="absolute end-2 grid size-7 place-items-center rounded-full text-ink-3 hover:bg-line hover:text-ink" onClick={() => onChange('')} aria-label="×">
+                <button type="button" className="absolute end-2 grid size-7 place-items-center rounded-full text-ink-3 hover:bg-line hover:text-ink" onClick={() => onChange('')} aria-label={t('spa.pos.effacer')}>
                     <X className="size-4" />
                 </button>
             )}
@@ -58,8 +58,8 @@ export function DateRange({ du, au, onChange, size = 'md' }: { du: string; au: s
 
     return (
         <>
-            <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.du')}<input type="date" className={`field ${h} w-auto`} value={du} onChange={(e) => onChange({ du: e.target.value })} /></label>
-            <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.au')}<input type="date" className={`field ${h} w-auto`} value={au} onChange={(e) => onChange({ au: e.target.value })} /></label>
+            <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.du')}<input type="date" dir="ltr" className={`field ${h} w-auto`} value={du} onChange={(e) => onChange({ du: e.target.value })} /></label>
+            <label className="flex items-center gap-1.5 text-sm text-ink-2">{t('spa.ui.au')}<input type="date" dir="ltr" className={`field ${h} w-auto`} value={au} onChange={(e) => onChange({ au: e.target.value })} /></label>
         </>
     );
 }

@@ -1,6 +1,6 @@
 @php($rtl = \App\Support\Locales::isRtl())
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" dir="{{ $rtl ? 'rtl' : 'ltr' }}">
+<html lang="{{ app()->getLocale() === 'ary' ? 'ar-MA' : app()->getLocale() }}" dir="{{ $rtl ? 'rtl' : 'ltr' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">

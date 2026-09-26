@@ -6,6 +6,7 @@ use App\Models\Caisse;
 use App\Models\CaisseMouvement;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Support\Money;
 use Filament\Widgets\Widget;
 use Illuminate\Support\Facades\DB;
 
@@ -161,9 +162,9 @@ class StatsOverview extends Widget
                     $i->date_facture?->format('d/m/Y'),
                     $i->client?->raison_sociale ?? '—',
                     __('app.statut.'.$i->statut),
-                    number_format((float) $i->total_ttc, 2).' DH',
-                    number_format($paye, 2).' DH',
-                    number_format($reste, 2).' DH',
+                    Money::format((float) $i->total_ttc),
+                    Money::format($paye),
+                    Money::format($reste),
                 ],
                 'amount' => $impaye ? $reste : (float) $i->total_ttc,
             ];
@@ -202,7 +203,7 @@ class StatsOverview extends Widget
                 $p->client?->raison_sociale ?? '—',
                 __('app.mode.'.$p->mode),
                 $p->reference ?: '—',
-                number_format((float) $p->montant, 2).' DH',
+                Money::format((float) $p->montant),
             ],
             'amount' => (float) $p->montant,
         ])->all();
@@ -238,9 +239,9 @@ class StatsOverview extends Widget
                 __('app.caisse.'.$m->type),
                 $m->motif,
                 $m->user?->name ?? '—',
-                number_format((float) $m->solde_avant, 2).' DH',
-                number_format((float) $m->montant, 2).' DH',
-                number_format((float) $m->solde_apres, 2).' DH',
+                Money::format((float) $m->solde_avant),
+                Money::format((float) $m->montant),
+                Money::format((float) $m->solde_apres),
             ],
             'amount' => $m->type === 'entree' ? (float) $m->montant : -(float) $m->montant,
         ])->all();

@@ -191,7 +191,7 @@ class BackOfficeController extends Controller
             Setting::put($key, $data[$key] ?? null);
         }
 
-        ActivityLog::record('settings.updated', null, 'Paramètres modifiés');
+        ActivityLog::record('settings.updated');
 
         return $this->settings();
     }

@@ -49,6 +49,15 @@ export interface UsbStatus {
     aide: string | null;
 }
 
+/**
+ * GET /sync: the audit-log id to ask from next time, and which models
+ * changed since the id sent ("*" = refresh everything).
+ */
+export interface SyncPoll {
+    cursor: number;
+    changes: string[];
+}
+
 /** Today at this till (GET /pos/journee). */
 export interface PosJournee {
     ventes: number;

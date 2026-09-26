@@ -58,7 +58,7 @@ export default function LoginPage() {
                     <Checkbox label={t('spa.auth.se_souvenir')} checked={remember} onChange={setRemember} />
 
                     <button type="submit" className="btn btn-primary w-full text-base" disabled={busy || !email || !password}>
-                        {busy ? <span className="spinner size-5" /> : <LogIn />}
+                        {busy ? <span className="spinner size-5" /> : <LogIn className="rtl:-scale-x-100" />}
                         {t('spa.auth.connexion')}
                     </button>
                 </form>

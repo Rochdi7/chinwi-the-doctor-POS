@@ -50,6 +50,48 @@ class SaleServiceTest extends TestCase
         ], $attributes));
     }
 
+    /**
+     * Same account on two tills: the other device saves its sale between
+     * this one reading the next number and writing it. The unique index
+     * refuses this one, and it is saved again, once, with nothing doubled.
+     */
+    public function test_a_sale_that_loses_the_race_for_its_number_is_saved_again_once(): void
+    {
+        $lait = $this->article(['prix_vente' => 10, 'tva' => 0, 'stock' => 100]);
+        $collided = false;
+
+        Invoice::creating(function (Invoice $invoice) use (&$collided) {
+            if ($collided) {
+                return;
+            }
+            $collided = true;
+            // "The other till" takes the number first.
+            \Illuminate\Support\Facades\DB::table('invoices')->insert([
+                'numero' => $invoice->numero,
+                'date_facture' => now()->toDateString(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        });
+
+        [$invoice, $payment] = $this->sales->enregistrer(
+            $this->sales->lignesDepuisArticles([['article_id' => $lait->id, 'quantite' => 3]]),
+            null,
+            true,
+            null,
+            'especes',
+        );
+
+        $this->assertTrue($collided);
+        $this->assertSame(1, Invoice::count());
+        $this->assertSame(1, Payment::count());
+        $this->assertSame(30.0, (float) $invoice->total_ttc);
+        $this->assertNotNull($payment);
+        // The failed attempt was rolled back whole: stock moved once.
+        $this->assertSame(97.0, (float) $lait->fresh()->stock);
+        $this->assertSame(1, ActivityLog::where('subject_type', 'InvoiceItem')->where('event', 'created')->count());
+    }
+
     public function test_a_cash_sale_writes_invoice_payment_stock_drawer_balance_and_audit(): void
     {
         $client = Client::create(['raison_sociale' => 'Epicerie Atlas']);

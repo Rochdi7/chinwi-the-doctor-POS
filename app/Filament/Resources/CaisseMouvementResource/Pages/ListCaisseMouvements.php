@@ -4,6 +4,7 @@ namespace App\Filament\Resources\CaisseMouvementResource\Pages;
 
 use App\Filament\Resources\CaisseMouvementResource;
 use App\Models\Caisse;
+use App\Support\Money;
 use Filament\Resources\Pages\ListRecords;
 
 class ListCaisseMouvements extends ListRecords
@@ -12,7 +13,7 @@ class ListCaisseMouvements extends ListRecords
 
     public function getSubheading(): string
     {
-        return __('app.caisse.solde').' : '.number_format(Caisse::solde(), 2).' DH';
+        return __('app.caisse.solde').' : '.Money::format(Caisse::solde());
     }
 
     /**

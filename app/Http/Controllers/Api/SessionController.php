@@ -56,9 +56,15 @@ class SessionController extends Controller
 
     public function logout(Request $request): JsonResponse
     {
+        $locale = $request->session()->get('locale');
+
         Auth::guard('web')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+        // The language is the cashier's choice, not part of the login: keep it on the login screen.
+        if ($locale) {
+            $request->session()->put('locale', $locale);
+        }
 
         return response()->json($this->payload($request));
     }

@@ -141,6 +141,7 @@ export function LineChart({ labels, series, format, height = 240 }: LineProps) {
             {hover !== null && (
                 <div
                     className="pointer-events-none absolute top-2 z-10 min-w-40 rounded-ctl border border-line bg-surface px-3 py-2 text-xs shadow-lift"
+                    dir={document.documentElement.dir}
                     style={{ left: `${(x(hover) / W) * 100}%`, transform: hover > n / 2 ? 'translateX(calc(-100% - 12px))' : 'translateX(12px)' }}
                 >
                     <p className="mb-1 font-bold text-ink">{labels[hover]}</p>

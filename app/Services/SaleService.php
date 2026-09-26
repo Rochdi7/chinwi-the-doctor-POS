@@ -6,6 +6,7 @@ use App\Models\Article;
 use App\Models\Invoice;
 use App\Models\InvoiceItem;
 use App\Models\Payment;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -34,6 +35,31 @@ class SaleService
             throw ValidationException::withMessages(['items' => __('app.pos.panier_vide_erreur')]);
         }
 
+        // Two tills (often the same account on two devices) saving at the
+        // same instant both read the same "next" number, and the unique
+        // index refuses the second. Its transaction is rolled back whole
+        // (lines, stock, drawer, audit), so it is simply saved again with
+        // the number after.
+        for ($attempt = 1; ; $attempt++) {
+            try {
+                return $this->ecrire($lignes, $clientId, $encaisser, $montant, $mode);
+            } catch (UniqueConstraintViolationException $e) {
+                if ($attempt >= self::TENTATIVES || ! str_contains($e->getMessage(), 'numero')) {
+                    throw $e;
+                }
+            }
+        }
+    }
+
+    /** Attempts before a numbering collision is reported as an error. */
+    private const TENTATIVES = 5;
+
+    /**
+     * @param  array<int|string, array<string, mixed>>  $lignes
+     * @return array{0: Invoice, 1: Payment|null}
+     */
+    private function ecrire(array $lignes, ?int $clientId, bool $encaisser, ?float $montant, string $mode): array
+    {
         return DB::transaction(function () use ($lignes, $clientId, $encaisser, $montant, $mode) {
             $invoice = Invoice::create([
                 'numero' => Invoice::nextNumero(),

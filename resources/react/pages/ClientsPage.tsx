@@ -28,7 +28,7 @@ export default function ClientsPage() {
     const [creating, setCreating] = useState(false);
 
     const columns: Column<ClientRow>[] = [
-        { key: 'nom', header: t('client.raison_sociale'), sort: 'raison_sociale', cell: (c) => <div><p className={`font-bold ${c.actif ? '' : 'text-ink-3'}`}>{c.raison_sociale}</p>{c.ice && <p className="text-xs text-ink-3">ICE {c.ice}</p>}</div> },
+        { key: 'nom', header: t('client.raison_sociale'), sort: 'raison_sociale', cell: (c) => <div><p className={`font-bold ${c.actif ? '' : 'text-ink-3'}`}>{c.raison_sociale}</p>{c.ice && <p className="text-xs text-ink-3">{t('client.ice')} <span className="num">{c.ice}</span></p>}</div> },
         { key: 'tel', header: t('client.telephone'), hideBelow: 'sm', cell: (c) => <span className="num">{c.telephone ?? '—'}</span> },
         { key: 'solde', header: t('client.solde'), sort: 'solde', align: 'end', cell: (c) => <Money value={c.solde} className={`font-bold ${c.solde > 0 ? 'text-bad' : 'text-ok'}`} /> },
         { key: 'actif', header: t('client.actif'), align: 'center', hideBelow: 'md', cell: (c) => <Badge tone={c.actif ? 'ok' : 'neutral'}>{c.actif ? t('spa.ui.actif') : t('spa.ui.inactif')}</Badge> },
@@ -92,13 +92,13 @@ export function ClientDetailPage() {
                             <dd><Money value={c.solde} className={`text-xl font-extrabold ${c.solde > 0 ? 'text-bad' : 'text-ok'}`} /></dd>
                         </div>
                         {c.telephone && <div className="flex items-center gap-2"><Phone className="size-4 text-ink-3" /><span className="num">{c.telephone}</span></div>}
-                        {c.email && <div className="flex items-center gap-2"><Mail className="size-4 text-ink-3" />{c.email}</div>}
+                        {c.email && <div className="flex items-center gap-2"><Mail className="size-4 text-ink-3" /><bdi dir="ltr">{c.email}</bdi></div>}
                         {c.adresse && <div className="flex items-start gap-2"><MapPin className="mt-0.5 size-4 text-ink-3" />{c.adresse}</div>}
                         {(c.ice || c.rc || c.numero_compte) && (
                             <div className="grid grid-cols-3 gap-2 border-t border-line pt-3 text-xs">
-                                <div><dt className="text-ink-3">ICE</dt><dd className="num font-semibold">{c.ice ?? '—'}</dd></div>
-                                <div><dt className="text-ink-3">RC</dt><dd className="num font-semibold">{c.rc ?? '—'}</dd></div>
-                                <div><dt className="text-ink-3">{t('client.numero_compte')}</dt><dd className="num font-semibold">{c.numero_compte ?? '—'}</dd></div>
+                                <div><dt className="text-ink-3">{t('client.ice')}</dt><dd className="font-semibold"><span className="num">{c.ice ?? '—'}</span></dd></div>
+                                <div><dt className="text-ink-3">{t('client.rc')}</dt><dd className="font-semibold"><span className="num">{c.rc ?? '—'}</span></dd></div>
+                                <div><dt className="text-ink-3">{t('client.numero_compte')}</dt><dd className="font-semibold"><span className="num">{c.numero_compte ?? '—'}</span></dd></div>
                             </div>
                         )}
                     </dl>

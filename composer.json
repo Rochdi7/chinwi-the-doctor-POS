@@ -17,6 +17,7 @@
     "require-dev": {
         "fakerphp/faker": "^1.23",
         "khanamiryan/qrcode-detector-decoder": "^2.0",
+        "laravel-lang/common": "^6.8",
         "laravel/pail": "^1.2.2",
         "laravel/pint": "^1.24",
         "laravel/sail": "^1.41",

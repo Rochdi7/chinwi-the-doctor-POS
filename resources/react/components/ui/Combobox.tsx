@@ -59,7 +59,11 @@ export function Combobox({ value, onChange, options, placeholder = '—', cleara
         const r = button.current.getBoundingClientRect();
         const wanted = Math.min(320, 48 + list.length * 44 + (searchable ? 48 : 0));
         const up = r.bottom + wanted > window.innerHeight - 8 && r.top > wanted;
-        setPos({ top: up ? r.top - 4 : r.bottom + 4, left: r.left, width: r.width, up });
+        // Anchor to the reading-start edge and keep the panel inside the viewport.
+        const width = Math.max(r.width, 220);
+        const rtl = document.documentElement.dir === 'rtl';
+        const left = Math.max(8, Math.min(rtl ? r.right - width : r.left, window.innerWidth - width - 8));
+        setPos({ top: up ? r.top - 4 : r.bottom + 4, left, width, up });
     }, [open, list.length, searchable]);
 
     useEffect(() => {
@@ -128,7 +132,7 @@ export function Combobox({ value, onChange, options, placeholder = '—', cleara
                     role="listbox"
                     onKeyDown={onKey}
                     className="fixed z-[100] flex flex-col overflow-hidden rounded-card border border-line bg-surface shadow-lift"
-                    style={{ left: pos.left, width: Math.max(pos.width, 220), maxHeight: 320, ...(pos.up ? { bottom: window.innerHeight - pos.top } : { top: pos.top }) }}
+                    style={{ left: pos.left, width: pos.width, maxHeight: 320, ...(pos.up ? { bottom: window.innerHeight - pos.top } : { top: pos.top }) }}
                 >
                     {searchable && (
                         <label className="relative flex items-center border-b border-line p-2">

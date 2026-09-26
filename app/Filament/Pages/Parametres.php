@@ -57,14 +57,14 @@ class Parametres extends Page implements HasForms
         return $form
             ->schema([
                 Forms\Components\Section::make()->schema([
-                    Forms\Components\TextInput::make('societe_nom')->label('Société / الشركة')->required(),
-                    Forms\Components\TextInput::make('societe_telephone')->label('Téléphone / الهاتف'),
-                    Forms\Components\Textarea::make('societe_adresse')->label('Adresse / العنوان')->rows(2)->columnSpanFull(),
-                    Forms\Components\TextInput::make('societe_email')->label('Email')->email(),
-                    Forms\Components\TextInput::make('societe_ice')->label('ICE'),
-                    Forms\Components\TextInput::make('societe_rc')->label('RC'),
-                    Forms\Components\TextInput::make('devise')->label('Devise / العملة')->default('DH'),
-                    Forms\Components\TextInput::make('tva_defaut')->label('TVA % / الضريبة')->numeric()->default(20),
+                    Forms\Components\TextInput::make('societe_nom')->label(__('app.setting.societe'))->required(),
+                    Forms\Components\TextInput::make('societe_telephone')->label(__('app.client.telephone')),
+                    Forms\Components\Textarea::make('societe_adresse')->label(__('app.client.adresse'))->rows(2)->columnSpanFull(),
+                    Forms\Components\TextInput::make('societe_email')->label(__('app.client.email'))->email(),
+                    Forms\Components\TextInput::make('societe_ice')->label(__('app.client.ice')),
+                    Forms\Components\TextInput::make('societe_rc')->label(__('app.client.rc')),
+                    Forms\Components\TextInput::make('devise')->label(__('app.setting.devise'))->default('DH'),
+                    Forms\Components\TextInput::make('tva_defaut')->label(__('app.setting.tva_defaut'))->numeric()->default(20),
                 ])->columns(2),
             ])
             ->statePath('data');
@@ -76,8 +76,8 @@ class Parametres extends Page implements HasForms
             Setting::put($key, $value);
         }
 
-        ActivityLog::record('settings.updated', null, 'Paramètres modifiés');
+        ActivityLog::record('settings.updated');
 
-        Notification::make()->title('OK')->success()->send();
+        Notification::make()->title(__('app.spa.ui.enregistre'))->success()->send();
     }
 }

@@ -23,8 +23,11 @@ export function SessionProvider({ children }: { children: ReactNode }) {
     // The whole document flips for Arabic and Darija; no separate layout.
     useEffect(() => {
         if (!session) return;
-        document.documentElement.lang = session.locale;
+        // Browsers and screen readers do not know 'ary': tell them it is Moroccan Arabic.
+        document.documentElement.lang = session.locale === 'ary' ? 'ar-MA' : session.locale;
         document.documentElement.dir = session.dir;
+        const pos = (session.messages.pos as Record<string, string> | undefined)?.label;
+        if (pos) document.title = session.societe ? `${session.societe} — ${pos}` : pos;
     }, [session]);
 
     if (query.isPending) {

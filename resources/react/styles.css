@@ -108,6 +108,7 @@ html[dir='rtl'] body { font-family: var(--font-arabic); }
 
 /* Amounts keep Latin digits and "1 234,50 DH" order inside Arabic text. */
 .num { font-variant-numeric: tabular-nums; direction: ltr; unicode-bidi: isolate; }
+html[dir='rtl'] .num { font-family: var(--font-sans); }
 
 @layer components {
     .panel {

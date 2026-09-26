@@ -84,7 +84,7 @@ class PaymentResource extends Resource
                     ->label(__('app.payment.montant'))
                     ->numeric()
                     ->required()
-                    ->suffix('DH')
+                    ->suffix(Money::devise())
                     ->autofocus(),
                 Forms\Components\DatePicker::make('date_paiement')
                     ->label(__('app.payment.date_paiement'))

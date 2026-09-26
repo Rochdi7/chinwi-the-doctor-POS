@@ -7,6 +7,7 @@ use App\Filament\Resources\CategoryResource;
 use App\Models\Article;
 use App\Models\Setting;
 use App\Support\Barcode;
+use App\Support\Money;
 use App\Support\ProductLookup;
 use Filament\Actions;
 use Filament\Forms;
@@ -73,13 +74,13 @@ class ListArticles extends ListRecords
                     ->numeric()
                     ->minValue(0)
                     ->required()
-                    ->suffix('DH'),
+                    ->suffix(Money::devise()),
                 Forms\Components\TextInput::make('prix_achat')
                     ->label(__('app.article.prix_achat'))
                     ->numeric()
                     ->minValue(0)
                     ->default(0)
-                    ->suffix('DH'),
+                    ->suffix(Money::devise()),
                 Forms\Components\TextInput::make('stock')
                     ->label(__('app.article.stock'))
                     ->numeric()

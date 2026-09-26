@@ -41,7 +41,13 @@ class AuditObserver
 
     private function label(Model $model): string
     {
-        return class_basename($model).' #'.$model->getKey();
+        $group = match (class_basename($model)) {
+            'Article' => 'article', 'Client' => 'client', 'Invoice' => 'invoice', 'Payment' => 'payment',
+            'Category' => 'categorie', 'CaisseMouvement' => 'caisse', 'Setting' => 'setting',
+            default => null,
+        };
+
+        return ($group ? __("app.$group.label") : class_basename($model)).' #'.$model->getKey();
     }
 
     private function montant(Model $model): ?float

@@ -1,12 +1,14 @@
-import { memo, useState, type RefObject } from 'react';
-import { Search, X, PackageSearch } from 'lucide-react';
+import { memo, useMemo, useState, type RefObject } from 'react';
+import { Search, X, PackageSearch, Check, Minus, Plus } from 'lucide-react';
 import { useSession, useT } from '@/auth/session';
+import { ProductPhoto } from '@/components/ProductPhoto';
 import { formatMoney, formatQty } from '@/lib/format';
 import { usePos } from '../store';
-import type { Article } from '@/types/api';
+import type { Article, Category } from '@/types/api';
 
 interface GridProps {
     articles: Article[] | undefined;
+    categories: Category[];
     loading: boolean;
     refreshing: boolean;
     recherche: string;
@@ -14,15 +16,6 @@ interface GridProps {
     searchBox: RefObject<HTMLInputElement | null>;
     onAdd: (article: Article) => void;
 }
-
-const tones = [
-    'bg-indigo-100 text-indigo-800',
-    'bg-emerald-100 text-emerald-800',
-    'bg-amber-100 text-amber-800',
-    'bg-pink-100 text-pink-800',
-    'bg-cyan-100 text-cyan-800',
-    'bg-violet-100 text-violet-800',
-];
 
 /** Stock as the Livewire grid showed it: rupture at 0, low at 5 or less. */
 function StockBadge({ stock }: { stock: number }) {
@@ -33,74 +26,86 @@ function StockBadge({ stock }: { stock: number }) {
     }
 
     return (
-        <span className={`rounded-full px-2 py-0.5 text-[0.7rem] font-bold ${stock <= 5 ? 'bg-warn-soft text-warn-ink' : 'bg-surface-2 text-ink-2 ring-1 ring-line'}`}>
+        <span className={`rounded-full px-2 py-0.5 text-[0.7rem] font-bold ${stock <= 5 ? 'bg-warn-soft text-warn-ink' : 'bg-surface/90 text-ink-2 ring-1 ring-line'}`}>
             {t('pos.stock')} <span className="num">{formatQty(stock)}</span>
         </span>
     );
 }
 
+const stepBtn = 'grid size-7 flex-none place-items-center rounded-full bg-surface-2 text-ink transition-colors hover:bg-brand-soft hover:text-brand active:bg-brand active:text-white disabled:opacity-40 disabled:hover:bg-surface-2 disabled:hover:text-ink';
+
 /**
- * One tile, one tap. Re-renders only when its own article or its quantity
- * in the cart changes, not when anything else in the cart does.
+ * One product card: photo, category, name, price and how many are in the
+ * cart. A tap on the photo adds one, as does +. Re-renders only when its own
+ * article or its quantity in the cart changes, not when anything else in the
+ * cart does.
  */
-const ProductTile = memo(function ProductTile({ article, devise, onAdd }: { article: Article; devise: string; onAdd: (a: Article) => void }) {
+const ProductTile = memo(function ProductTile({ article, categorie, devise, onAdd }: { article: Article; categorie: string | undefined; devise: string; onAdd: (a: Article) => void }) {
+    const t = useT();
     const inCart = usePos((s) => s.lines.find((l) => l.article_id === article.id)?.quantite ?? 0);
     const [pulse, setPulse] = useState(0);
 
+    const add = () => {
+        onAdd(article);
+        setPulse((p) => p + 1);
+    };
+
     return (
-        <button
-            type="button"
-            title={article.designation}
-            onClick={() => {
-                onAdd(article);
-                setPulse((p) => p + 1);
-            }}
-            className={`relative flex w-full flex-col gap-2 rounded-card border bg-surface p-3 text-start transition-[border-color,box-shadow,transform] duration-100 hover:border-brand hover:shadow-lift active:scale-[0.97] focus-visible:outline-3 focus-visible:outline-brand/35 ${
-                inCart > 0 ? 'border-brand bg-brand-soft ring-1 ring-brand' : 'border-line'
-            } ${pulse ? 'animate-pop' : ''}`}
-            key={pulse}
+        <div
+            className={`relative flex flex-col rounded-2xl border bg-surface p-3 transition-[border-color,box-shadow] duration-100 hover:shadow-lift ${
+                inCart > 0 ? 'border-ok ring-1 ring-ok' : 'border-line hover:border-line-strong'
+            }`}
         >
-            <span className="relative block w-full">
-                {article.image_url ? (
-                    <span className="grid aspect-[4/3] w-full place-items-center overflow-hidden rounded-ctl bg-surface-2">
-                        <img src={article.image_url} alt="" loading="lazy" decoding="async" className="size-full object-cover" />
-                    </span>
-                ) : (
-                    <span aria-hidden className={`grid aspect-[4/3] w-full place-items-center rounded-ctl text-2xl font-extrabold ${tones[(article.category_id ?? 0) % tones.length]}`}>
-                        {article.designation.trim().slice(0, 2).toUpperCase()}
-                    </span>
-                )}
-                {inCart > 0 && (
-                    <span className="num absolute top-1.5 end-1.5 rounded-full bg-brand px-2 py-0.5 text-sm font-extrabold text-white shadow-lift">× {formatQty(inCart)}</span>
-                )}
-            </span>
-            <span className="min-w-0">
+            {inCart > 0 && (
+                <span className="absolute top-2 end-2 z-10 grid size-6 place-items-center rounded-full bg-ok text-white shadow-card" aria-hidden>
+                    <Check className="size-3.5" strokeWidth={3} />
+                </span>
+            )}
+
+            {/* The big tap target: the photo and the name both add one. */}
+            <button type="button" title={article.designation} onClick={add} className={`group flex flex-col text-start focus-visible:outline-3 focus-visible:outline-brand/35 ${pulse ? 'animate-pop' : ''}`} key={pulse}>
+                <span className="relative block w-full">
+                    <ProductPhoto src={article.image_url} className="aspect-square w-full transition-transform duration-150 group-hover:scale-[1.02]" iconClassName="size-10" />
+                    <span className="absolute bottom-1.5 start-1.5"><StockBadge stock={article.stock} /></span>
+                </span>
+                <span className="mt-2.5 block truncate text-xs text-ink-3">{categorie ?? article.unite_label}</span>
                 <span className="line-clamp-2 text-[0.95rem] leading-snug font-bold text-ink">{article.designation}</span>
-                <span className="mt-0.5 block truncate text-xs text-ink-3">
-                    {article.reference}
-                    {article.unite_label ? ` · ${article.unite_label}` : ''}
+            </button>
+
+            <span className="mt-2 flex items-center justify-between gap-1.5 border-t border-dashed border-line pt-2">
+                <span className={`num min-w-0 truncate text-[0.95rem] font-extrabold ${article.stock <= 0 ? 'text-ink-2' : 'text-ink'}`}>{formatMoney(article.prix_vente, devise)}</span>
+                <span className="flex flex-none items-center gap-0.5" dir="ltr">
+                    <button type="button" className={stepBtn} disabled={inCart <= 0} onClick={() => usePos.getState().moins(article.id)} title={t('pos.moins')} aria-label={t('pos.moins')}>
+                        <Minus className="size-3.5" />
+                    </button>
+                    <span className="num min-w-6 text-center text-sm font-extrabold">{formatQty(inCart)}</span>
+                    <button type="button" className={stepBtn} onClick={add} title={t('pos.plus')} aria-label={t('pos.plus')}>
+                        <Plus className="size-3.5" />
+                    </button>
                 </span>
             </span>
-            <span className="mt-auto flex flex-wrap items-center justify-between gap-1.5">
-                <span className={`num text-[1.05rem] font-extrabold ${article.stock <= 0 ? 'text-ink-2' : 'text-ink'}`}>{formatMoney(article.prix_vente, devise)}</span>
-                <StockBadge stock={article.stock} />
-            </span>
-        </button>
+        </div>
     );
 });
 
-export function ProductGrid({ articles, loading, refreshing, recherche, onRecherche, searchBox, onAdd }: GridProps) {
+export function ProductGrid({ articles, categories, loading, refreshing, recherche, onRecherche, searchBox, onAdd }: GridProps) {
     const t = useT();
-    const { devise } = useSession();
+    const { devise, user, locale } = useSession();
+    const names = useMemo(() => new Map(categories.map((c) => [c.id, c.nom])), [categories]);
+    const today = useMemo(() => new Intl.DateTimeFormat(locale === 'ary' ? 'ar-MA' : locale, { dateStyle: 'long' }).format(new Date()), [locale]);
 
     return (
-        <section className="panel flex min-h-0 flex-col">
-            <div className="flex items-center gap-3 border-b border-line p-3">
-                <label className="relative flex flex-1 items-center">
+        <section className="flex min-h-0 flex-col">
+            <div className="flex flex-wrap items-center gap-3 pb-3">
+                <div className="min-w-0 flex-1">
+                    <h1 className="truncate text-xl font-extrabold tracking-tight">{t('spa.pos.bienvenue', { name: user?.name ?? '' })}</h1>
+                    <p className="text-sm text-ink-2">{today}</p>
+                </div>
+                <label className="relative flex w-full items-center sm:w-72">
                     <Search className="pointer-events-none absolute start-3 size-5 text-ink-3" />
                     <input
                         ref={searchBox}
-                        className="field min-h-11 bg-surface-2 ps-10 pe-20 focus:bg-surface"
+                        className="field min-h-11 rounded-xl bg-surface ps-10 pe-10 shadow-card"
                         value={recherche}
                         onChange={(e) => onRecherche(e.target.value)}
                         placeholder={t('pos.recherche')}
@@ -108,23 +113,21 @@ export function ProductGrid({ articles, loading, refreshing, recherche, onRecher
                         autoComplete="off"
                         spellCheck={false}
                     />
-                    <span className="absolute end-2 flex items-center gap-1">
-                        {recherche !== '' ? (
-                            <button type="button" className="grid size-8 place-items-center rounded-full text-ink-3 hover:bg-line hover:text-ink" onClick={() => onRecherche('')} aria-label="×">
-                                <X className="size-4" />
-                            </button>
-                        ) : null}
-                    </span>
+                    {recherche !== '' && (
+                        <button type="button" className="absolute end-2 grid size-8 place-items-center rounded-full text-ink-3 hover:bg-line hover:text-ink" onClick={() => onRecherche('')} aria-label={t('spa.pos.effacer')}>
+                            <X className="size-4" />
+                        </button>
+                    )}
                 </label>
-                <span className="hidden text-xs font-semibold whitespace-nowrap text-ink-3 sm:block">
+                <span className="hidden h-11 items-center rounded-xl bg-surface px-3 text-xs font-semibold whitespace-nowrap text-ink-3 shadow-card sm:inline-flex">
                     {refreshing ? <span className="spinner size-4 align-middle" /> : `${articles?.length ?? 0} ${t('article.plural')}`}
                 </span>
             </div>
 
-            <div className={`min-h-0 flex-1 overflow-y-auto p-3 transition-opacity ${refreshing ? 'opacity-60' : ''}`}>
+            <div className={`min-h-0 flex-1 overflow-y-auto pb-2 transition-opacity ${refreshing ? 'opacity-60' : ''}`}>
                 {loading ? (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2.5">
-                        {Array.from({ length: 12 }, (_, i) => <div key={i} className="skeleton h-[13.5rem] rounded-card" />)}
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(11rem,1fr))] gap-3">
+                        {Array.from({ length: 8 }, (_, i) => <div key={i} className="skeleton h-72 rounded-2xl" />)}
                     </div>
                 ) : !articles || articles.length === 0 ? (
                     <div className="flex h-full min-h-60 flex-col items-center justify-center gap-2 text-center text-ink-2">
@@ -135,8 +138,8 @@ export function ProductGrid({ articles, loading, refreshing, recherche, onRecher
                         {recherche.trim() !== '' && <p className="text-sm break-all">« {recherche.trim()} »</p>}
                     </div>
                 ) : (
-                    <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2.5">
-                        {articles.map((a) => <ProductTile key={a.id} article={a} devise={devise} onAdd={onAdd} />)}
+                    <div className="grid grid-cols-[repeat(auto-fill,minmax(12rem,1fr))] gap-3">
+                        {articles.map((a) => <ProductTile key={a.id} article={a} categorie={a.category_id === null ? undefined : names.get(a.category_id)} devise={devise} onAdd={onAdd} />)}
                     </div>
                 )}
             </div>

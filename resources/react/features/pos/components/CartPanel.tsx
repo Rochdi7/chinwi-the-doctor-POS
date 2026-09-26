@@ -1,7 +1,6 @@
-import { useMemo, useState, type RefObject } from 'react';
-import { Banknote, CheckCircle2, Clock3, CreditCard, ShoppingBag, Trash2, TriangleAlert, UserRound, ScanBarcode } from 'lucide-react';
+import { useMemo, type RefObject } from 'react';
+import { Banknote, CreditCard, ReceiptText, TriangleAlert, UserRound, ScanBarcode } from 'lucide-react';
 import { useSession, useT } from '@/auth/session';
-import { Dialog } from '@/components/ui/Dialog';
 import { Combobox } from '@/components/ui/Combobox';
 import { formatMoney, formatQty } from '@/lib/format';
 import { usePos } from '../store';
@@ -12,9 +11,6 @@ interface Props {
     apercu: Apercu | undefined;
     apercuStale: boolean;
     clients: ClientOption[];
-    busy: boolean;
-    onEncaisser: () => void;
-    onEnregistrer: () => void;
     amountBox: RefObject<HTMLInputElement | null>;
 }
 
@@ -33,7 +29,11 @@ function quickAmounts(total: number): number[] {
     return [...out].slice(0, 4);
 }
 
-export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onEnregistrer, amountBox }: Props) {
+/**
+ * The order being built: customer, lines, totals and the cash handed over.
+ * Encaisser / Enregistrer live in the action bar under the screen.
+ */
+export function CartPanel({ apercu, apercuStale, clients, amountBox }: Props) {
     const t = useT();
     const { devise } = useSession();
     const lines = usePos((s) => s.lines);
@@ -41,8 +41,7 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
     const mode = usePos((s) => s.mode);
     const montantRecu = usePos((s) => s.montantRecu);
     const lastAdded = usePos((s) => s.lastAdded);
-    const { setClient, setMode, setMontantRecu, vider } = usePos.getState();
-    const [confirmClear, setConfirmClear] = useState(false);
+    const { setClient, setMode, setMontantRecu } = usePos.getState();
 
     const empty = lines.length === 0;
     // With an empty cart the last preview is kept by the query cache; never show it.
@@ -58,23 +57,59 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
     ];
 
     return (
-        <aside className="panel flex min-h-0 flex-col overflow-hidden">
+        <aside className="panel flex min-h-0 flex-col overflow-hidden rounded-2xl">
             {/* ---- Header ---- */}
-            <div className="flex items-center justify-between gap-2 border-b border-line px-4 py-2.5 short:py-1.5">
-                <h2 className="flex items-center gap-2 text-base font-extrabold">
-                    <ShoppingBag className="size-5 text-brand" />
-                    {t('pos.panier')}
+            <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2 short:pt-2">
+                <h2 className="flex items-center gap-2 text-lg font-extrabold">
+                    <ReceiptText className="size-5 text-brand" />
+                    {t('spa.pos.commande')}
                     <span className={`num min-w-7 rounded-full px-2 py-0.5 text-center text-sm font-bold ${empty ? 'bg-surface-2 text-ink-3' : 'bg-brand text-white'}`}>
                         {formatQty(count)}
                     </span>
                 </h2>
-                <button type="button" className="btn btn-danger-ghost min-h-9 px-2.5 text-sm" disabled={empty || busy} onClick={() => setConfirmClear(true)}>
-                    <Trash2 className="size-4" />
-                    {t('pos.vider')}
-                </button>
+            </div>
+
+            {/* ---- Customer & payment mode ---- */}
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2 px-4 pb-3 short:pb-2">
+                <Combobox
+                    size="sm"
+                    icon={<UserRound className="size-4" />}
+                    value={clientId === null ? '' : String(clientId)}
+                    onChange={(v) => setClient(v === '' ? null : Number(v))}
+                    options={clients.map((c) => ({ value: String(c.id), label: c.raison_sociale }))}
+                    placeholder={t('vente.client_passage')}
+                    clearable
+                    aria-label={t('invoice.client')}
+                />
+
+                <div role="radiogroup" aria-label={t('spa.pos.paiement')} className="flex gap-1 rounded-ctl bg-surface-2 p-1 ring-1 ring-line">
+                    {modes.map(({ value, icon: Icon, label }) => {
+                        const on = mode === value;
+                        return (
+                            <button
+                                key={value}
+                                type="button"
+                                role="radio"
+                                aria-checked={on}
+                                onClick={() => setMode(value)}
+                                title={label}
+                                className={`flex min-h-8 items-center gap-1.5 rounded-md px-2.5 text-sm font-bold transition-colors ${on ? 'bg-surface text-brand shadow-card ring-2 ring-brand' : 'text-ink-2 hover:text-ink'}`}
+                            >
+                                <Icon className="size-4" />
+                                <span className="hidden 2xl:inline">{label}</span>
+                            </button>
+                        );
+                    })}
+                </div>
             </div>
 
             {/* ---- Lines ---- */}
+            <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_6.5rem] gap-x-2 border-y border-line bg-surface-2 px-3 py-1.5 text-[0.7rem] font-bold tracking-wide text-ink-3 uppercase rtl:text-xs rtl:tracking-normal rtl:normal-case">
+                <span className="w-8" />
+                <span>{t('item.article')}</span>
+                <span className="w-24 text-center">{t('item.quantite')}</span>
+                <span className="text-end">{t('item.total_ttc')}</span>
+            </div>
             <div className="min-h-24 flex-1 overflow-y-auto">
                 {empty ? (
                     <div className="flex h-full min-h-40 flex-col items-center justify-center gap-2 px-6 py-8 text-center">
@@ -119,7 +154,7 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
                         {t('invoice.total_tva')} <span className="num font-semibold text-ink">{formatMoney(shown?.total_tva ?? 0, devise)}</span>
                     </span>
                 </div>}
-                <div className="flex items-center justify-between gap-3 rounded-ctl bg-navy px-4 py-2.5 short:py-1.5 text-white">
+                <div className="flex items-center justify-between gap-3 rounded-xl bg-teal-deep px-4 py-2.5 short:py-1.5 text-white">
                     <span className="text-xs font-bold tracking-wider uppercase opacity-80 rtl:text-sm rtl:tracking-normal rtl:normal-case">{t('pos.total')}</span>
                     <span className="num text-[1.9rem] short:text-[1.6rem] leading-none font-extrabold tracking-tight whitespace-nowrap">
                         {formatMoney(shown?.total_ttc ?? 0, devise)}
@@ -127,45 +162,13 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
                 </div>
             </div>
 
-            {/* ---- Payment ---- */}
-            <div className="space-y-2.5 border-t border-line px-4 pt-3 pb-4 short:space-y-2 short:pt-2 short:pb-3">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-                    <Combobox
-                        size="sm"
-                        icon={<UserRound className="size-4" />}
-                        value={clientId === null ? '' : String(clientId)}
-                        onChange={(v) => setClient(v === '' ? null : Number(v))}
-                        options={clients.map((c) => ({ value: String(c.id), label: c.raison_sociale }))}
-                        placeholder={t('vente.client_passage')}
-                        clearable
-                        aria-label={t('invoice.client')}
-                    />
-
-                    <div role="radiogroup" aria-label={t('spa.pos.paiement')} className="flex gap-1 rounded-ctl bg-surface-2 p-1 ring-1 ring-line">
-                        {modes.map(({ value, icon: Icon, label }) => {
-                            const on = mode === value;
-                            return (
-                                <button
-                                    key={value}
-                                    type="button"
-                                    role="radio"
-                                    aria-checked={on}
-                                    onClick={() => setMode(value)}
-                                    className={`flex min-h-9 items-center gap-1.5 rounded-md px-3 text-sm font-bold transition-colors ${on ? 'bg-surface text-brand shadow-card ring-2 ring-brand' : 'text-ink-2 hover:text-ink'}`}
-                                >
-                                    <Icon className="size-4" />
-                                    {label}
-                                </button>
-                            );
-                        })}
-                    </div>
-                </div>
-
+            {/* ---- Cash handed over ---- */}
+            <div className="space-y-2 border-t border-line px-4 pt-2.5 pb-3 short:pt-2 short:pb-2.5">
                 <div className="short:grid short:grid-cols-[auto_minmax(0,1fr)] short:items-center short:gap-x-3">
                     <label htmlFor="montant-recu" className="mb-1 block short:mb-0 short:max-w-24 text-xs font-bold tracking-wide text-ink-2 uppercase rtl:text-sm rtl:tracking-normal rtl:normal-case">
                         {t('pos.montant_recu')}
                     </label>
-                    <div className="flex items-stretch overflow-hidden rounded-ctl border border-line-strong bg-surface focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/20">
+                    <div className="flex items-stretch overflow-hidden rounded-xl border border-line-strong bg-surface focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/20" dir="ltr">
                         <input
                             id="montant-recu"
                             ref={amountBox}
@@ -199,62 +202,18 @@ export function CartPanel({ apercu, apercuStale, clients, busy, onEncaisser, onE
 
                 {/* Change to hand back, or what is still owed: Laravel's figures. */}
                 {rendu && typed && rendu.monnaie > 0 && (
-                    <div className="flex animate-rise items-center justify-between gap-3 rounded-ctl border border-ok/30 bg-ok-soft px-4 py-2 text-ok-ink">
+                    <div className="flex animate-rise items-center justify-between gap-3 rounded-xl border border-ok/30 bg-ok-soft px-4 py-2 text-ok-ink">
                         <span className="text-sm font-bold">{t('pos.monnaie')}</span>
                         <span className="num text-[1.6rem] leading-none font-extrabold">{formatMoney(rendu.monnaie, devise)}</span>
                     </div>
                 )}
                 {rendu && typed && rendu.reste > 0 && (
-                    <div className="flex animate-rise items-center justify-between gap-3 rounded-ctl border border-bad/30 bg-bad-soft px-4 py-2 text-bad-ink">
+                    <div className="flex animate-rise items-center justify-between gap-3 rounded-xl border border-bad/30 bg-bad-soft px-4 py-2 text-bad-ink">
                         <span className="text-sm font-bold">{t('pos.reste')}</span>
                         <span className="num text-[1.6rem] leading-none font-extrabold">{formatMoney(rendu.reste, devise)}</span>
                     </div>
                 )}
-
-                <button
-                    type="button"
-                    className="btn btn-success min-h-[3.5rem] short:min-h-12 w-full justify-between px-4 text-lg font-extrabold shadow-[0_8px_18px_-10px_rgb(5_150_105/0.9)]"
-                    disabled={empty || busy}
-                    onClick={onEncaisser}
-                >
-                    <span className="flex items-center gap-2">
-                        {busy ? <span className="spinner size-5" /> : <CheckCircle2 className="size-6!" />}
-                        {busy ? t('spa.pos.traitement') : t('pos.encaisser')}
-                    </span>
-                    {!empty && shown && <span className="num rounded-md bg-black/15 px-2 py-1 text-base">{formatMoney(shown.total_ttc, devise)}</span>}
-                </button>
-
-                <button type="button" className="btn btn-secondary w-full short:min-h-10" disabled={empty || busy} onClick={onEnregistrer}>
-                    <Clock3 />
-                    {t('pos.sans_paiement')}
-                </button>
             </div>
-
-            <Dialog
-                open={confirmClear}
-                onClose={() => setConfirmClear(false)}
-                size="sm"
-                title={`${t('pos.vider')} ?`}
-                footer={
-                    <>
-                        <button className="btn btn-secondary" onClick={() => setConfirmClear(false)} data-autofocus>✕</button>
-                        <button
-                            className="btn btn-primary bg-bad hover:bg-bad-ink"
-                            onClick={() => {
-                                vider();
-                                setConfirmClear(false);
-                            }}
-                        >
-                            <Trash2 />
-                            {t('pos.vider')}
-                        </button>
-                    </>
-                }
-            >
-                <p className="text-sm text-ink-2">
-                    <span className="num font-bold text-ink">{formatQty(count)}</span> · {t('pos.panier')}
-                </p>
-            </Dialog>
         </aside>
     );
 }

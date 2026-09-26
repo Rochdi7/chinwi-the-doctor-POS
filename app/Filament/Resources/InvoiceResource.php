@@ -291,7 +291,7 @@ class InvoiceResource extends Resource
                         ->label(__('app.vente.montant_recu'))
                         ->numeric()
                         ->minValue(0)
-                        ->suffix('DH')
+                        ->suffix(Money::devise())
                         ->helperText(__('app.invoice.total_ttc'))
                         ->visible(fn (Get $get) => (bool) $get('encaisser_maintenant'))
                         ->dehydrated(false),
@@ -432,7 +432,7 @@ class InvoiceResource extends Resource
                             ->minValue(0.01)
                             ->maxValue($record->reste())
                             ->default($record->reste())
-                            ->suffix('DH')
+                            ->suffix(Money::devise())
                             ->autofocus(),
                         Forms\Components\Radio::make('mode')
                             ->label(__('app.payment.mode'))

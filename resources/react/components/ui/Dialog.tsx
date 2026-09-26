@@ -1,5 +1,6 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { useT } from '@/auth/session';
 
 interface DialogProps {
     open: boolean;
@@ -18,6 +19,7 @@ interface DialogProps {
  * attribute <dialog> looks for, so the browser would pick the first button).
  */
 export function Dialog({ open, onClose, title, description, children, footer, size = 'md' }: DialogProps) {
+    const t = useT();
     const ref = useRef<HTMLDialogElement>(null);
 
     useEffect(() => {
@@ -51,7 +53,7 @@ export function Dialog({ open, onClose, title, description, children, footer, si
                                 {title && <h2 className="text-lg font-bold">{title}</h2>}
                                 {description && <p className="mt-1 text-sm text-ink-2">{description}</p>}
                             </div>
-                            <button className="btn btn-ghost -me-2 min-h-9 px-2" onClick={onClose} aria-label="×">
+                            <button className="btn btn-ghost -me-2 min-h-9 px-2" onClick={onClose} aria-label={t('spa.ui.fermer')}>
                                 <X />
                             </button>
                         </div>

@@ -30,7 +30,8 @@ export function categoryIcon(name: string | null | undefined): typeof Tag {
 }
 
 /** The icon for a category name; null/undefined means "all categories". */
-export function CategoryIcon({ name, ...props }: { name: string | null | undefined } & LucideProps) {
+// SVG attributes carry their own `name`; ours is the category's, so drop theirs.
+export function CategoryIcon({ name, ...props }: { name: string | null | undefined } & Omit<LucideProps, 'name'>) {
     const Icon = categoryIcon(name);
     return <Icon {...props} />;
 }

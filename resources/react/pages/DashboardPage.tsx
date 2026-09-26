@@ -103,7 +103,7 @@ export default function DashboardPage() {
                         <p className="mt-2 text-[1.7rem] leading-tight font-extrabold tracking-tight">
                             {d ? <Money value={d.stats[key]} /> : <span className="skeleton inline-block h-8 w-40 rounded" />}
                         </p>
-                        <p className="mt-1 text-xs font-semibold text-brand opacity-0 transition-opacity group-hover:opacity-100">{t('stats.voir_details')} →</p>
+                        <p className="mt-1 text-xs font-semibold text-brand opacity-0 transition-opacity group-hover:opacity-100">{t('stats.voir_details')} <span className="inline-block rtl:-scale-x-100">→</span></p>
                     </button>
                 ))}
             </div>
@@ -127,7 +127,7 @@ export default function DashboardPage() {
                             <table className="w-full text-sm">
                                 <thead><tr className="text-ink-2"><th className="py-1 text-start">{t('spa.ui.periode')}</th><th className="py-1 text-end">{t('chart.facture')}</th><th className="py-1 text-end">{t('chart.encaisse')}</th></tr></thead>
                                 <tbody>{d?.mensuel.labels.map((l, i) => (
-                                    <tr key={l} className="border-t border-line"><td className="num py-1.5">{l}</td><td className="py-1.5 text-end"><Money value={d.mensuel.facture[i]} /></td><td className="py-1.5 text-end"><Money value={d.mensuel.encaisse[i]} /></td></tr>
+                                    <tr key={l} className="border-t border-line"><td className="py-1.5"><span className="num">{l}</span></td><td className="py-1.5 text-end"><Money value={d.mensuel.facture[i]} /></td><td className="py-1.5 text-end"><Money value={d.mensuel.encaisse[i]} /></td></tr>
                                 ))}</tbody>
                             </table>
                         }

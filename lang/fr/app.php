@@ -130,6 +130,7 @@ return [
         'payee' => 'Payée',
     ],
     'caisse' => [
+        'annulation_reglement' => 'Annulation règlement #:id',
         'label' => 'Caisse',
         'solde' => 'Argent en caisse',
         'mouvements' => 'Mouvements de caisse',
@@ -145,6 +146,10 @@ return [
         'retirer' => 'Retirer argent',
     ],
     'pdf' => [
+        'bc' => 'BC',
+        'num_col' => 'N°',
+        'ht' => '(HT)',
+        'ttc' => '(TTC)',
         'titre' => 'VENTE',
         'numero' => 'N°',
         'client' => 'Client',
@@ -161,7 +166,7 @@ return [
         'paye' => 'Payé',
         'reste' => 'Reste',
         'date' => 'Date',
-        'activite' => 'Vente & réparation de téléphones, ordinateurs & accessoires',
+        'activite' => 'Vente et réparation de téléphones, ordinateurs et accessoires',
         'adresse' => 'Adresse',
         'infos_client' => 'Informations du client',
         'nom_societe' => 'Nom / Société',
@@ -244,6 +249,9 @@ return [
         'fermer' => 'Fermer',
     ],
     'setting' => [
+        'societe' => 'Société',
+        'devise' => 'Devise',
+        'tva_defaut' => 'TVA % par défaut',
         'label' => 'Paramètre',
         'plural' => 'Paramètres',
         'key' => 'Clé',
@@ -309,6 +317,7 @@ return [
         'panier_vide' => 'Scannez un code-barres ou cliquez sur un produit pour commencer.',
         'lignes' => ':count ligne(s)',
         'vider' => 'Vider',
+        'vider_confirmer' => 'Vider le panier ?',
         'retirer' => 'Retirer',
         'plus' => 'Ajouter un',
         'moins' => 'Enlever un',
@@ -373,6 +382,7 @@ return [
             'photo_aide' => 'Photo prise sur un fond uni de préférence. Elle est recadrée et le fond enlevé automatiquement.',
             'photo_traitement' => 'Préparation de la photo…',
             'photo_erreur' => 'Cette image ne peut pas être lue.',
+            'photo_fond_non_retire' => 'Fond non retiré : le fond est trop chargé. Prenez la photo sur une surface unie (blanche de préférence).',
             'plus_options' => 'Plus d’options',
             'moins_options' => 'Moins d’options',
             'essentiel' => 'Nom, prix et code-barres suffisent. Le reste est optionnel.',
@@ -447,6 +457,9 @@ return [
         ],
         'pos' => [
             'calculatrice' => 'Calculatrice',
+            'bienvenue' => 'Bienvenue, :name',
+            'commande' => 'Commande',
+            'actualiser' => 'Actualiser',
             'plein_ecran' => 'Plein écran',
             'quitter_plein_ecran' => 'Quitter le plein écran',
             'aujourdhui' => 'Aujourd’hui',
@@ -466,4 +479,4 @@ return [
             'chargement' => 'Chargement…',
         ],
     ],
-];
+]

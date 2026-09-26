@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\InvoiceController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\PosController;
 use App\Http\Controllers\Api\SessionController;
+use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\ArticleLabelController;
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\InvoicePdfController;
@@ -48,6 +49,9 @@ Route::prefix('api')->name('api.')->group(function () {
 
     // Back office (the screens the Filament panel used to provide).
     Route::middleware('auth')->group(function () {
+        // Polled by every open screen: what changed since the given audit-log id.
+        Route::get('/sync', SyncController::class)->name('sync');
+
         Route::get('/dashboard', [BackOfficeController::class, 'dashboard'])->name('dashboard');
         Route::get('/dashboard/{key}', [BackOfficeController::class, 'dashboardDetail'])->name('dashboard.detail');
 

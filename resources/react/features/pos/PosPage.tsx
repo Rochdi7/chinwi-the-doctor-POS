@@ -12,6 +12,7 @@ import { PosHeader } from './components/PosHeader';
 import { CategoryRail } from './components/CategoryRail';
 import { ProductGrid } from './components/ProductGrid';
 import { CartPanel } from './components/CartPanel';
+import { ActionBar } from './components/ActionBar';
 import { Calculator } from './components/Calculator';
 import { SaleDoneDialog } from './components/SaleDoneDialog';
 import type { Article, PosJournee, ScanResult, VenteResult } from '@/types/api';
@@ -29,11 +30,12 @@ export default function PosPage() {
     const t = useT();
     const queryClient = useQueryClient();
 
+    // No scan box on screen: the USB scanner is heard page-wide (useKeyboardScanner),
+    // so this ref stays empty and scans land wherever the cursor is.
     const scanBox = useRef<HTMLInputElement>(null);
     const searchBox = useRef<HTMLInputElement>(null);
     const amountBox = useRef<HTMLInputElement>(null);
 
-    const [scan, setScan] = useState('');
     const [recherche, setRecherche] = useState('');
     const [categorie, setCategorie] = useState<number | null>(null);
     const [done, setDone] = useState<VenteResult | null>(null);
@@ -50,7 +52,14 @@ export default function PosPage() {
     const apercu = useApercu(lines, montantRecu);
     const vente = useVente();
 
-    const focusScan = useCallback(() => window.setTimeout(() => scanBox.current?.focus(), 0), []);
+    // Back to "nothing focused" so the next scan is not typed into a field.
+    const focusScan = useCallback(() => window.setTimeout(() => (document.activeElement as HTMLElement | null)?.blur(), 0), []);
+
+    /** Products, categories and today's figures again: after a delivery keyed in on another PC. */
+    const refresh = useCallback(() => {
+        void queryClient.invalidateQueries({ queryKey: ['pos'] });
+        focusScan();
+    }, [queryClient, focusScan]);
 
     // ---- Adding to the cart ------------------------------------------------
 
@@ -74,7 +83,6 @@ export default function PosPage() {
 
     const onKeyboardScan = useCallback(
         async (code: string) => {
-            setScan('');
             try {
                 handleScan(await scanCode(code));
             } catch (error) {
@@ -141,7 +149,7 @@ export default function PosPage() {
                 submit(true);
             } else if (e.key === 'Escape') {
                 if (document.activeElement === searchBox.current && recherche !== '') setRecherche('');
-                scanBox.current?.focus();
+                (document.activeElement as HTMLElement | null)?.blur();
             }
         };
 
@@ -153,16 +161,25 @@ export default function PosPage() {
         if (init.isError) toast.error(errorMessage(init.error, t));
     }, [init.isError, init.error, t]);
 
-    return (
-        <div className="flex h-dvh flex-col">
-            <PosHeader scanBox={scanBox} scan={scan} onScanChange={setScan} usb={usb} journee={journee.data} onCalculator={() => setCalc(true)} />
+    const empty = lines.length === 0;
 
-            <main className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-3 lg:grid-cols-[10.5rem_minmax(0,1fr)_minmax(22rem,25rem)] lg:overflow-hidden xl:grid-cols-[12rem_minmax(0,1fr)_27rem]">
+    return (
+        <div className="flex h-dvh flex-col bg-canvas">
+            <PosHeader
+                usb={usb}
+                journee={journee.data}
+                onCalculator={() => setCalc(true)}
+                onRefresh={refresh}
+                refreshing={articles.isFetching || init.isFetching}
+            />
+
+            <main className="grid min-h-0 flex-1 grid-cols-1 gap-3 overflow-y-auto p-3 lg:grid-cols-[6.5rem_minmax(0,1fr)_minmax(22rem,25rem)] lg:overflow-hidden xl:grid-cols-[7rem_minmax(0,1fr)_27rem]">
                 <CategoryRail categories={init.data?.categories ?? []} active={categorie} onSelect={setCategorie} />
 
                 <div className="flex min-h-[60dvh] flex-col lg:min-h-0">
                     <ProductGrid
                         articles={articles.data}
+                        categories={init.data?.categories ?? []}
                         loading={articles.isPending}
                         refreshing={articles.isFetching && articles.isPlaceholderData}
                         recherche={recherche}
@@ -176,13 +193,11 @@ export default function PosPage() {
                     apercu={apercu.data}
                     apercuStale={apercu.isFetching || apercu.isPlaceholderData}
                     clients={init.data?.clients ?? []}
-                    busy={vente.isPending}
-                    onEncaisser={() => submit(true)}
-                    onEnregistrer={() => submit(false)}
                     amountBox={amountBox}
                 />
             </main>
 
+            <ActionBar total={empty ? undefined : apercu.data?.total_ttc} busy={vente.isPending} onEncaisser={() => submit(true)} onEnregistrer={() => submit(false)} />
 
             <SaleDoneDialog result={done} onClose={() => { setDone(null); focusScan(); }} />
             <Calculator open={calc} onClose={() => { setCalc(false); focusScan(); }} onUse={(v) => { usePos.getState().setMontantRecu(String(v).replace('.', ',')); amountBox.current?.focus(); }} />

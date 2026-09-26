@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Plus, Printer, Download, RefreshCw, ScanBarcode, AlertTriangle, ExternalLink, ChevronDown, ChevronUp, Camera, X, ImageIcon } from 'lucide-react';
-import { useT } from '@/auth/session';
+import { useSession, useT } from '@/auth/session';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { useListParams } from '@/lib/useListParams';
 import { useDebounced } from '@/lib/useDebounced';
@@ -39,7 +39,7 @@ export default function ArticlesPage() {
                     {a.image_url ? <img src={a.image_url} alt="" loading="lazy" className="size-10 flex-none rounded-ctl object-contain" /> : <span className="grid size-10 flex-none place-items-center rounded-ctl bg-surface-2 text-ink-3"><ImageIcon className="size-4" /></span>}
                     <div className="min-w-0">
                     <p className={`font-bold ${a.actif ? '' : 'text-ink-3 line-through'}`}>{a.designation}</p>
-                    <p className="text-xs text-ink-3">{a.reference}{a.code_barre ? <span className="num"> · {a.code_barre}</span> : null}</p>
+                    <p className="text-xs text-ink-3"><span className="num">{a.reference}</span>{a.code_barre ? <> · <span className="num">{a.code_barre}</span></> : null}</p>
                     </div>
                 </div>
             ),
@@ -143,6 +143,7 @@ type FormState = {
 
 function ArticleForm({ article, prefill, onClose }: { article: ArticleRow | null; prefill: Partial<ArticleRow> | null; onClose: () => void }) {
     const t = useT();
+    const { devise } = useSession();
     const queryClient = useQueryClient();
     const categories = useCategories();
     const [form, setForm] = useState<FormState | null>(null);
@@ -245,7 +246,7 @@ function ArticleForm({ article, prefill, onClose }: { article: ArticleRow | null
                 <form className="grid gap-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); submit(); }}>
                     {/* What a shop needs to sell the thing: name, price, barcode, stock, shelf. */}
                     <TextField className="sm:col-span-2" label={t('article.designation')} value={form.designation} onChange={(v) => set('designation', v)} error={errors.designation} autoFocus required />
-                    <TextField label={t('article.prix_vente')} value={form.prix_vente} onChange={(v) => set('prix_vente', v)} error={errors.prix_vente} inputMode="decimal" suffix="DH" />
+                    <TextField label={t('article.prix_vente')} value={form.prix_vente} onChange={(v) => set('prix_vente', v)} error={errors.prix_vente} inputMode="decimal" suffix={devise} />
                     <TextField label={t('article.stock')} value={form.stock} onChange={(v) => set('stock', v)} error={errors.stock} inputMode="decimal" />
                     <PhotoField
                         current={photo.removed ? null : (photo.pending?.previewUrl ?? article?.image_url ?? null)}
@@ -257,6 +258,7 @@ function ArticleForm({ article, prefill, onClose }: { article: ArticleRow | null
                             try {
                                 const pending = await prepareProductImage(file, photo.removeBg);
                                 setPhoto((p) => ({ ...p, pending, removed: false, busy: false }));
+                                if (pending.bgRemoved === false) toast.warning(t('spa.ui.photo_fond_non_retire'));
                             } catch {
                                 toast.error(t('spa.ui.photo_erreur'));
                                 setPhoto((p) => ({ ...p, busy: false }));
@@ -319,7 +321,7 @@ function ArticleForm({ article, prefill, onClose }: { article: ArticleRow | null
                         <>
                             <TextField label={t('article.reference')} value={form.reference} onChange={(v) => set('reference', v)} error={errors.reference} dir="ltr" />
                             <SelectField label={t('article.unite')} value={form.unite} onChange={(v) => set('unite', v)} error={errors.unite} options={Object.entries(unites).map(([value, label]) => ({ value, label }))} />
-                            <TextField label={t('article.prix_achat')} value={form.prix_achat} onChange={(v) => set('prix_achat', v)} error={errors.prix_achat} inputMode="decimal" suffix="DH" />
+                            <TextField label={t('article.prix_achat')} value={form.prix_achat} onChange={(v) => set('prix_achat', v)} error={errors.prix_achat} inputMode="decimal" suffix={devise} />
                             <TextField label={t('article.tva')} value={form.tva} onChange={(v) => set('tva', v)} error={errors.tva} inputMode="decimal" suffix="%" />
                             <TextField label={t('article.marque')} value={form.marque} onChange={(v) => set('marque', v)} error={errors.marque} />
                             <div className="sm:col-span-2">
@@ -407,7 +409,7 @@ function QuickAddDialog({ open, onClose, onExisting, onNew }: { open: boolean; o
     return (
         <Dialog open={open} onClose={onClose} size="sm" title={t('ajout_rapide.label')} description={t('ajout_rapide.aide')}>
             <form className="space-y-3" onSubmit={(e) => { e.preventDefault(); void lookup(); }}>
-                <label className="relative flex items-center">
+                <label className="relative flex items-center" dir="ltr">
                     <ScanBarcode className="pointer-events-none absolute start-3 size-5 text-brand" />
                     <input
                         className="field min-h-12 border-2 border-brand bg-brand-soft ps-11 text-lg font-semibold"

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Plus, Printer, Pencil, ArrowLeft, Banknote, CreditCard, Trash2, ShoppingCart } from 'lucide-react';
-import { useT } from '@/auth/session';
+import { useSession, useT } from '@/auth/session';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { useListParams } from '@/lib/useListParams';
 import { useDebounced } from '@/lib/useDebounced';
@@ -11,7 +11,7 @@ import { formatQty, parseAmount } from '@/lib/format';
 import { Dialog } from '@/components/ui/Dialog';
 import { toast } from '@/components/ui/toast';
 import { DataTable, Pagination, type Column } from '@/components/ui/table';
-import { DateRange, DateText, DeleteButton, FilterSelect, ModeBadge, Money, PageHeader, SearchBox, Section, StatutBadge, Toolbar, useMoney } from '@/components/ui/misc';
+import { DateRange, DateText, DeleteButton, FilterSelect, ModeBadge, Money, PageHeader, SearchBox, Section, StatutBadge, Toolbar } from '@/components/ui/misc';
 import { SelectField, TextArea, TextField, fieldErrors } from '@/components/ui/form';
 import type { Article, InvoiceDetail, InvoiceLine, InvoiceRow, InvoiceStatut, PaymentMode } from '@/types/api';
 
@@ -81,7 +81,7 @@ export default function VentesPage() {
 /** "Encaisser": one payment, at most what is still owed (checked by Laravel too). */
 function EncaisserDialog({ invoice, onClose }: { invoice: Pick<InvoiceRow, 'id' | 'numero' | 'reste'>; onClose: () => void }) {
     const t = useT();
-    const money = useMoney();
+    const { devise } = useSession();
     const queryClient = useQueryClient();
     const [montant, setMontant] = useState(String(invoice.reste));
     const [mode, setMode] = useState<PaymentMode>('especes');
@@ -108,11 +108,11 @@ function EncaisserDialog({ invoice, onClose }: { invoice: Pick<InvoiceRow, 'id' 
 
     return (
         <Dialog
-            open onClose={onClose} size="sm" title={`${t('invoice.encaisser')} — ${invoice.numero}`} description={`${t('invoice.reste')} : ${money(invoice.reste)}`}
+            open onClose={onClose} size="sm" title={`${t('invoice.encaisser')} — ${invoice.numero}`} description={<>{t('invoice.reste')} : <Money value={invoice.reste} /></>}
             footer={<><button className="btn btn-secondary" onClick={onClose}>{t('spa.ui.annuler')}</button><button className="btn btn-success" disabled={busy} onClick={submit}>{busy && <span className="spinner size-4" />}{t('invoice.encaisser')}</button></>}
         >
             <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-                <TextField label={t('payment.montant')} value={montant} onChange={setMontant} error={error} inputMode="decimal" suffix="DH" data-autofocus />
+                <TextField label={t('payment.montant')} value={montant} onChange={setMontant} error={error} inputMode="decimal" suffix={devise} data-autofocus />
                 <div role="radiogroup" aria-label={t('payment.mode')} className="grid grid-cols-2 gap-2">
                     {(['especes', 'tpe'] as PaymentMode[]).map((m) => (
                         <button key={m} type="button" role="radio" aria-checked={mode === m} onClick={() => setMode(m)}
@@ -194,7 +194,7 @@ export function VenteDetailPage() {
                     columns={[
                         { key: 'd', header: t('payment.date_paiement'), cell: (p) => <DateText value={p.date} /> },
                         { key: 'm', header: t('payment.mode'), cell: (p) => <ModeBadge mode={p.mode} /> },
-                        { key: 'r', header: t('payment.reference'), hideBelow: 'sm', cell: (p) => p.reference ?? '—' },
+                        { key: 'r', header: t('payment.reference'), hideBelow: 'sm', cell: (p) => (p.reference ? <bdi dir="ltr">{p.reference}</bdi> : '—') },
                         { key: 'x', header: t('payment.montant'), align: 'end', cell: (p) => <Money value={p.montant} className="font-bold" /> },
                         {
                             key: 'a', header: '', align: 'end', cell: (p) => (
@@ -280,7 +280,7 @@ function ArticlePicker({ value, onChange, results, onPick }: { value: string; on
                             onClick={() => pick(a)}
                             className={`flex min-h-11 cursor-pointer items-center justify-between gap-3 px-3 text-[0.95rem] ${i === active ? 'bg-brand-soft text-brand' : ''}`}
                         >
-                            <span className="min-w-0 truncate"><b>{a.designation}</b> <span className="text-xs text-ink-3">{a.reference}</span></span>
+                            <span className="min-w-0 truncate"><b>{a.designation}</b> <span className="num text-xs text-ink-3">{a.reference}</span></span>
                             <Money value={a.prix_vente} />
                         </li>
                     ))}
@@ -297,6 +297,7 @@ function ArticlePicker({ value, onChange, results, onPick }: { value: string; on
  */
 export function VenteFormPage() {
     const t = useT();
+    const { devise } = useSession();
     const { id } = useParams();
     const editing = id !== undefined;
     const navigate = useNavigate();
@@ -378,7 +379,7 @@ export function VenteFormPage() {
                 <div className="grid gap-4 p-4 sm:grid-cols-3">
                     <SelectField label={t('invoice.client')} value={header.client_id} onChange={(v) => setHeader({ ...header, client_id: v })} error={errors.client_id}
                         placeholder={t('vente.client_passage')} options={(clients.data ?? []).map((c) => ({ value: String(c.id), label: c.raison_sociale }))} />
-                    <TextField label={t('invoice.date_facture')} type="date" value={header.date_facture} onChange={(v) => setHeader({ ...header, date_facture: v })} error={errors.date_facture} />
+                    <TextField label={t('invoice.date_facture')} type="date" dir="ltr" value={header.date_facture} onChange={(v) => setHeader({ ...header, date_facture: v })} error={errors.date_facture} />
                     <TextField label={t('invoice.numero')} value={header.numero} onChange={(v) => setHeader({ ...header, numero: v })} error={errors.numero} dir="ltr" />
                 </div>
             </Section>
@@ -406,7 +407,7 @@ export function VenteFormPage() {
                                             <td className="px-1 py-1.5"><input className={`field min-h-10 ${errors[`items.${i}.designation`] ? 'border-bad' : ''}`} value={l.designation} onChange={(e) => patch(l.key, { designation: e.target.value })} aria-label={t('item.designation')} /></td>
                                             {(['quantite', 'prix_unitaire', 'remise', 'tva'] as const).map((f) => (
                                                 <td key={f} className="px-1 py-1.5">
-                                                    <input className={`field num min-h-10 text-end ${errors[`items.${i}.${f}`] ? 'border-bad' : ''}`} inputMode="decimal" value={l[f]} onChange={(e) => patch(l.key, { [f]: e.target.value })} aria-label={t(`item.${f}`)} title={errors[`items.${i}.${f}`]} />
+                                                    <input className={`field min-h-10 text-end tabular-nums ${errors[`items.${i}.${f}`] ? 'border-bad' : ''}`} inputMode="decimal" value={l[f]} onChange={(e) => patch(l.key, { [f]: e.target.value })} aria-label={t(`item.${f}`)} title={errors[`items.${i}.${f}`]} />
                                                 </td>
                                             ))}
                                             <td className="px-1 py-1.5"><button type="button" className="btn btn-danger-ghost min-h-10 px-2" onClick={() => setLines((ls) => ls.filter((x) => x.key !== l.key))} aria-label={t('pos.retirer')}><Trash2 /></button></td>
@@ -426,7 +427,7 @@ export function VenteFormPage() {
                     <div className="grid gap-4 p-4 sm:grid-cols-3">
                         <SelectField label={t('vente.encaisse_maintenant')} value={pay.encaisser ? '1' : '0'} onChange={(v) => setPay({ ...pay, encaisser: v === '1' })} options={[{ value: '1', label: t('spa.ui.oui') }, { value: '0', label: t('spa.ui.non') }]} hint={t('vente.rien_paye')} />
                         {pay.encaisser && <SelectField label={t('payment.mode')} value={pay.mode} onChange={(v) => setPay({ ...pay, mode: v as PaymentMode })} options={[{ value: 'especes', label: t('mode.especes') }, { value: 'tpe', label: t('mode.tpe') }]} />}
-                        {pay.encaisser && <TextField label={t('vente.montant_recu')} value={pay.montant_recu} onChange={(v) => setPay({ ...pay, montant_recu: v })} inputMode="decimal" suffix="DH" hint={t('pos.montant_recu_aide')} />}
+                        {pay.encaisser && <TextField label={t('vente.montant_recu')} value={pay.montant_recu} onChange={(v) => setPay({ ...pay, montant_recu: v })} inputMode="decimal" suffix={devise} hint={t('pos.montant_recu_aide')} />}
                     </div>
                 </Section>
             )}

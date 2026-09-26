@@ -1,6 +1,6 @@
-import { useEffect, useState, type RefObject } from 'react';
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ScanBarcode, LayoutDashboard, LogOut, UserRound, Calculator as CalcIcon, Maximize2, Minimize2 } from 'lucide-react';
+import { LayoutDashboard, LogOut, Calculator as CalcIcon, Maximize2, Minimize2, RefreshCw, Settings } from 'lucide-react';
 import { useSession, useSessionActions, useT } from '@/auth/session';
 import { LanguageSwitch } from '@/components/LanguageSwitch';
 import { AlertsBell } from '@/components/AlertsBell';
@@ -8,27 +8,29 @@ import { formatMoney } from '@/lib/format';
 import type { PosJournee, UsbStatus } from '@/types/api';
 
 interface Props {
-    scanBox: RefObject<HTMLInputElement | null>;
-    scan: string;
-    onScanChange: (value: string) => void;
     usb: UsbStatus | undefined;
     journee: PosJournee | undefined;
     onCalculator: () => void;
+    onRefresh: () => void;
+    refreshing: boolean;
 }
 
 const usbStyles: Record<string, string> = {
-    connected: 'bg-ok-soft text-ok-ink',
-    absent: 'bg-bad-soft text-bad-ink',
-    erreur: 'bg-bad-soft text-bad-ink',
-    serie: 'bg-warn-soft text-warn-ink',
+    connected: 'bg-ok/20 text-white',
+    absent: 'bg-bad/25 text-white',
+    erreur: 'bg-bad/25 text-white',
+    serie: 'bg-warn/25 text-white',
 };
 
 const usbDot: Record<string, string> = {
-    connected: 'bg-ok shadow-[0_0_0_3px_rgb(5_150_105/0.2)]',
+    connected: 'bg-ok shadow-[0_0_0_3px_rgb(5_150_105/0.3)]',
     absent: 'border-2 border-bad',
     erreur: 'bg-bad',
     serie: 'bg-warn',
 };
+
+/** A square tile in the dark bar: one icon, one job. */
+const tile = 'grid size-10 flex-none place-items-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20 focus-visible:outline-3 focus-visible:outline-white/50 disabled:opacity-50';
 
 /**
  * What Windows says about the USB scanner (App\Support\ScannerUsb). Nothing
@@ -39,7 +41,7 @@ function ScannerBadge({ usb }: { usb: UsbStatus | undefined }) {
     if (!usb || usb.state === 'unknown' || !usb.label) return null;
 
     return (
-        <span title={usb.aide ?? undefined} className={`inline-flex h-10 items-center gap-2 rounded-full px-3 text-sm font-semibold whitespace-nowrap ${usbStyles[usb.state] ?? ''}`}>
+        <span title={usb.aide ?? undefined} className={`hidden h-10 items-center gap-2 rounded-xl px-3 text-sm font-semibold whitespace-nowrap md:inline-flex ${usbStyles[usb.state] ?? ''}`}>
             <span className={`size-2.5 flex-none rounded-full ${usbDot[usb.state] ?? ''}`} />
             {usb.label}
         </span>
@@ -61,79 +63,89 @@ function FullscreenButton() {
 
     return (
         <button
-            className="btn btn-secondary min-h-10 px-3"
+            className={tile}
             title={label}
             aria-label={label}
             onClick={() => void (on ? document.exitFullscreen() : document.documentElement.requestFullscreen()).catch(() => {})}
         >
-            {on ? <Minimize2 /> : <Maximize2 />}
+            {on ? <Minimize2 className="size-5" /> : <Maximize2 className="size-5" />}
         </button>
     );
 }
 
-export function PosHeader({ scanBox, scan, onScanChange, usb, journee, onCalculator }: Props) {
+/** Wall clock, so the cashier never has to look for one. */
+function Clock() {
+    const [now, setNow] = useState(() => new Date());
+    useEffect(() => {
+        const id = window.setInterval(() => setNow(new Date()), 1000);
+        return () => window.clearInterval(id);
+    }, []);
+    const two = (n: number) => String(n).padStart(2, '0');
+
+    return (
+        <span className="num hidden h-10 items-center rounded-xl bg-white/10 px-3 text-[0.95rem] font-bold text-white sm:inline-flex">
+            {two(now.getHours())}:{two(now.getMinutes())}:{two(now.getSeconds())}
+        </span>
+    );
+}
+
+export function PosHeader({ usb, journee, onCalculator, onRefresh, refreshing }: Props) {
     const { user, societe, devise } = useSession();
     const { logout } = useSessionActions();
     const t = useT();
+    // Letters only: "Mehdi (Propriétaire)" gives "MP", not "M(".
+    const initials = (user?.name ?? '').split(/\s+/).map((w) => w.replace(/[^\p{L}]/gu, '')).filter(Boolean).slice(0, 2).map((w) => w[0]!.toUpperCase()).join('');
 
     return (
-        <header className="flex flex-wrap items-center gap-x-4 gap-y-2 border-b border-line bg-surface px-3 py-2">
+        <header className="flex flex-none flex-wrap items-center gap-x-3 gap-y-2 bg-[linear-gradient(90deg,var(--color-teal),var(--color-teal-deep))] px-3 py-2 text-white">
             <div className="flex min-w-0 items-center gap-2.5">
-                <img src="/assets/chinwi-the-doctor.jpeg" alt="" className="h-10 w-auto flex-none rounded-md border border-line bg-white object-contain" />
-                <div className="hidden min-w-0 leading-tight sm:block">
-                    <p className="truncate text-[0.95rem] font-extrabold tracking-tight">{t('pos.label')}</p>
-                    <p className="max-w-40 truncate text-xs text-ink-2">{societe}</p>
+                <img src="/assets/chinwi-the-doctor.jpeg" alt="" className="h-10 w-auto flex-none rounded-lg bg-white object-contain p-0.5" />
+                <div className="hidden min-w-0 leading-tight md:block">
+                    <p className="max-w-44 truncate text-[0.95rem] font-extrabold tracking-tight rtl:tracking-normal">{societe ?? t('pos.label')}</p>
+                    <p className="truncate text-xs text-teal-ink/80">{t('pos.label')}</p>
                 </div>
+                <Clock />
             </div>
-
-            {/* Scans land here by default; a code keyed by hand is sent with Enter. */}
-            <label className="relative order-last flex w-full items-center lg:order-none lg:w-auto lg:max-w-xl lg:flex-1">
-                <ScanBarcode className="pointer-events-none absolute start-3 size-5 text-brand" />
-                <input
-                    ref={scanBox}
-                    className="field min-h-11 border-2 border-brand bg-brand-soft ps-11 text-lg font-semibold tracking-wide focus:bg-surface"
-                    value={scan}
-                    onChange={(e) => onScanChange(e.target.value)}
-                    placeholder={t('scan.placeholder')}
-                    aria-label={t('scan.label')}
-                    autoComplete="off"
-                    autoFocus
-                    enterKeyHint="done"
-                    spellCheck={false}
-                />
-            </label>
 
             <div className="ms-auto flex flex-wrap items-center gap-2">
                 {/* Today so far: what was sold and what cash came in. */}
                 {journee && (
-                    <span className="hidden h-10 items-center gap-2 rounded-full bg-surface-2 px-3 text-sm md:inline-flex" title={t('spa.pos.aujourdhui')}>
-                        <span className="font-semibold text-ink-2">{t('spa.pos.aujourdhui')}</span>
+                    <span className="hidden h-10 items-center gap-2 rounded-xl bg-white/10 px-3 text-sm 2xl:inline-flex" title={t('spa.pos.aujourdhui')}>
+                        <span className="font-semibold text-teal-ink/80">{t('spa.pos.aujourdhui')}</span>
                         <span className="num font-extrabold">{formatMoney(journee.total, devise)}</span>
-                        <span className="num hidden text-xs text-ink-3 xl:inline">· {t('spa.pos.ventes_jour', { count: journee.ventes })} · {formatMoney(journee.especes, devise)} {t('spa.pos.especes_jour')}</span>
+                        <span className="hidden text-xs text-teal-ink/70 2xl:inline">· {t('spa.pos.ventes_jour', { count: journee.ventes })} · <span className="num">{formatMoney(journee.especes, devise)}</span> {t('spa.pos.especes_jour')}</span>
                     </span>
                 )}
 
                 <ScannerBadge usb={usb} />
 
-                <button className="btn btn-secondary min-h-10 px-3" onClick={onCalculator} title={t('spa.pos.calculatrice')} aria-label={t('spa.pos.calculatrice')}>
-                    <CalcIcon />
+                {/* Back office (dashboard, products, sales...). */}
+                <Link className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#4f46e5] px-3 text-sm font-bold text-white transition-colors hover:bg-[#4338ca]" to="/" title={t('spa.pos.gestion')} aria-label={t('spa.pos.gestion')}>
+                    <LayoutDashboard className="size-4" />
+                    <span className="hidden xl:inline">{t('spa.pos.gestion')}</span>
+                </Link>
+
+                <span className="mx-1 hidden h-7 w-px bg-white/15 lg:block" />
+
+                <button className={`${tile} bg-warm hover:bg-warm/85`} onClick={onCalculator} title={t('spa.pos.calculatrice')} aria-label={t('spa.pos.calculatrice')}>
+                    <CalcIcon className="size-5" />
                 </button>
                 <FullscreenButton />
+                <button className={tile} onClick={onRefresh} disabled={refreshing} title={t('spa.pos.actualiser')} aria-label={t('spa.pos.actualiser')}>
+                    <RefreshCw className={`size-5 ${refreshing ? 'animate-spin' : ''}`} />
+                </button>
+                <Link className={tile} to="/parametres" title={t('setting.plural')} aria-label={t('setting.plural')}>
+                    <Settings className="size-5" />
+                </Link>
                 <AlertsBell />
 
                 <LanguageSwitch compact />
 
-                {/* Back office (dashboard, articles, ventes...). */}
-                <Link className="btn btn-ghost min-h-10 px-3" to="/" title={t('spa.pos.gestion')}>
-                    <LayoutDashboard />
-                    <span className="hidden 2xl:inline">{t('spa.pos.gestion')}</span>
-                </Link>
-
-                <div className="flex h-10 items-center gap-1 rounded-full border border-line ps-3">
-                    <UserRound className="size-4 text-ink-3" />
-                    <span className="max-w-32 truncate text-sm font-semibold">{user?.name}</span>
-                    <button className="btn btn-ghost min-h-9 rounded-full px-2.5" onClick={() => void logout()} title={t('spa.auth.deconnexion')} aria-label={t('spa.auth.deconnexion')}>
-                        <LogOut className="rtl:-scale-x-100" />
+                <div className="flex h-10 items-center gap-2 rounded-xl bg-white/10 ps-1.5">
+                    <span aria-hidden className="grid size-7 place-items-center rounded-full bg-warm text-xs font-extrabold text-white">{initials || '·'}</span>
+                    <span className="hidden max-w-32 truncate text-sm font-semibold xl:inline">{user?.name}</span>
+                    <button className="grid h-10 w-9 place-items-center rounded-e-xl text-white/80 hover:bg-white/15 hover:text-white" onClick={() => void logout()} title={t('spa.auth.deconnexion')} aria-label={t('spa.auth.deconnexion')}>
+                        <LogOut className="size-4 rtl:-scale-x-100" />
                     </button>
                 </div>
             </div>

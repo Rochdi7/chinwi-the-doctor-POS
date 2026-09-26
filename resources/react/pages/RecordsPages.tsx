@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
 import { Printer, Pencil, Save, Eye } from 'lucide-react';
-import { useT } from '@/auth/session';
+import { useSession, useT } from '@/auth/session';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { useListParams } from '@/lib/useListParams';
 import { useDebounced } from '@/lib/useDebounced';
@@ -69,6 +69,7 @@ export function ReglementsPage() {
 
 function PaymentForm({ payment, onClose }: { payment: PaymentRow; onClose: () => void }) {
     const t = useT();
+    const { devise } = useSession();
     const queryClient = useQueryClient();
     const [form, setForm] = useState({ montant: String(payment.montant), date_paiement: payment.date_paiement ?? '', mode: payment.mode, reference: payment.reference ?? '' });
     const [errors, setErrors] = useState<Record<string, string>>({});
@@ -94,8 +95,8 @@ function PaymentForm({ payment, onClose }: { payment: PaymentRow; onClose: () =>
         <Dialog open onClose={onClose} size="sm" title={`${t('payment.label')} #${payment.id}`} description={payment.numero ? `${t('payment.invoice')} ${payment.numero}` : undefined}
             footer={<><button className="btn btn-secondary" onClick={onClose}>{t('spa.ui.annuler')}</button><button className="btn btn-primary" disabled={busy} onClick={submit}>{t('spa.ui.enregistrer')}</button></>}>
             <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-                <TextField label={t('payment.montant')} value={form.montant} onChange={(v) => setForm({ ...form, montant: v })} error={errors.montant} inputMode="decimal" suffix="DH" data-autofocus />
-                <TextField label={t('payment.date_paiement')} type="date" value={form.date_paiement} onChange={(v) => setForm({ ...form, date_paiement: v })} error={errors.date_paiement} />
+                <TextField label={t('payment.montant')} value={form.montant} onChange={(v) => setForm({ ...form, montant: v })} error={errors.montant} inputMode="decimal" suffix={devise} data-autofocus />
+                <TextField label={t('payment.date_paiement')} type="date" dir="ltr" value={form.date_paiement} onChange={(v) => setForm({ ...form, date_paiement: v })} error={errors.date_paiement} />
                 <SelectField label={t('payment.mode')} value={form.mode} onChange={(v) => setForm({ ...form, mode: v as PaymentMode })} options={[{ value: 'especes', label: t('mode.especes') }, { value: 'tpe', label: t('mode.tpe') }]} />
                 <TextField label={t('payment.reference')} value={form.reference} onChange={(v) => setForm({ ...form, reference: v })} error={errors.reference} />
             </form>
@@ -156,18 +157,23 @@ export function JournalPage() {
     const [open, setOpen] = useState<JournalRow | null>(null);
 
     const eventLabel = (e: string) => { const l = t(`event.${e}`); return l === `event.${e}` ? e : l; };
+    // subject_type is the model's class basename (ActivityLog::record).
+    const subjectLabel = (type: string, id: number | string | null) => {
+        const key = ({ Invoice: 'invoice.label', Payment: 'payment.label', Article: 'article.label', Client: 'client.label', Category: 'categorie.label', CaisseMouvement: 'caisse.label', Setting: 'setting.label' } as Record<string, string>)[type];
+        return <bdi>{key ? t(key) : type} #{id}</bdi>;
+    };
     const tone = (e: string) => (e.startsWith('caisse') ? 'warn' : e === 'deleted' ? 'bad' : e === 'created' ? 'ok' : 'brand') as 'warn' | 'bad' | 'ok' | 'brand';
 
     const columns: Column<JournalRow>[] = [
         { key: 'h', header: t('log.heure'), cell: (l) => <b><DateText value={l.occurred_at} /></b> },
         { key: 'u', header: t('log.user'), cell: (l) => l.user ?? '—' },
         { key: 'e', header: t('log.event'), cell: (l) => <Badge tone={tone(l.event)}>{eventLabel(l.event)}</Badge> },
-        { key: 's', header: t('log.subject'), hideBelow: 'md', cell: (l) => (l.subject_type ? `${l.subject_type} #${l.subject_id}` : '—') },
+        { key: 's', header: t('log.subject'), hideBelow: 'md', cell: (l) => (l.subject_type ? subjectLabel(l.subject_type, l.subject_id) : '—') },
         {
             key: 'c', header: t('log.changement'), cell: (l) => (
                 <div className="max-w-md space-y-0.5 text-xs">
-                    {l.changes.slice(0, 3).map((c, i) => <p key={i} className="truncate"><b>{c.champ}</b> : <span className="text-ink-3 line-through">{c.avant}</span> → <b>{c.apres}</b>{c.delta && <span className={c.delta.startsWith('+') ? ' text-ok' : ' text-bad'}> ({c.delta})</span>}</p>)}
-                    {l.changes.length > 3 && <p className="text-ink-3">+{l.changes.length - 3}</p>}
+                    {l.changes.slice(0, 3).map((c, i) => <p key={i} className="truncate"><b>{c.champ}</b> : <bdi className="text-ink-3 line-through">{c.avant}</bdi> <span className="inline-block rtl:-scale-x-100">→</span> <bdi className="font-bold">{c.apres}</bdi>{c.delta && <span className={c.delta.startsWith('+') ? ' text-ok' : ' text-bad'}> (<bdi>{c.delta}</bdi>)</span>}</p>)}
+                    {l.changes.length > 3 && <p className="num text-ink-3">+{l.changes.length - 3}</p>}
                     {l.changes.length === 0 && <span className="text-ink-3">{l.description ?? '—'}</span>}
                 </div>
             ),
@@ -196,9 +202,9 @@ export function JournalPage() {
                             <div><dt className="text-ink-3">{t('log.heure')}</dt><dd className="font-semibold"><DateText value={open.occurred_at} /></dd></div>
                             <div><dt className="text-ink-3">{t('log.user')}</dt><dd className="font-semibold">{open.user ?? '—'}</dd></div>
                             <div><dt className="text-ink-3">{t('log.event')}</dt><dd><Badge tone={tone(open.event)}>{eventLabel(open.event)}</Badge></dd></div>
-                            <div><dt className="text-ink-3">{t('log.subject')}</dt><dd className="font-semibold">{open.subject_type ? `${open.subject_type} #${open.subject_id}` : '—'}</dd></div>
+                            <div><dt className="text-ink-3">{t('log.subject')}</dt><dd className="font-semibold">{open.subject_type ? subjectLabel(open.subject_type, open.subject_id) : '—'}</dd></div>
                             <div><dt className="text-ink-3">{t('log.montant')}</dt><dd className="font-semibold"><Money value={open.montant} /></dd></div>
-                            <div><dt className="text-ink-3">{t('log.ip')}</dt><dd className="num font-semibold">{open.ip ?? '—'}</dd></div>
+                            <div><dt className="text-ink-3">{t('log.ip')}</dt><dd className="font-semibold"><span className="num">{open.ip ?? '—'}</span></dd></div>
                         </dl>
                         {open.changes.length === 0 ? <p className="text-sm text-ink-3">{t('log.aucun_changement')}</p> : (
                             <table className="w-full text-sm">
@@ -206,9 +212,9 @@ export function JournalPage() {
                                 <tbody>{open.changes.map((c, i) => (
                                     <tr key={i} className="border-b border-line last:border-0">
                                         <td className="py-2 pe-3 font-semibold">{c.champ}</td>
-                                        <td className="py-2 pe-3 text-ink-3 line-through">{c.avant}</td>
-                                        <td className="py-2 pe-3 font-bold">{c.apres}</td>
-                                        <td className={`py-2 whitespace-nowrap ${c.delta?.startsWith('+') ? 'text-ok' : 'text-bad'}`}>{c.delta ?? ''}</td>
+                                        <td className="py-2 pe-3 text-ink-3 line-through"><bdi>{c.avant}</bdi></td>
+                                        <td className="py-2 pe-3 font-bold"><bdi>{c.apres}</bdi></td>
+                                        <td className={`py-2 whitespace-nowrap ${c.delta?.startsWith('+') ? 'text-ok' : 'text-bad'}`}><bdi>{c.delta ?? ''}</bdi></td>
                                     </tr>
                                 ))}</tbody>
                             </table>
@@ -227,18 +233,21 @@ export function ParametresPage() {
     const queryClient = useQueryClient();
     const query = useQuery({ queryKey: ['/parametres'], queryFn: () => api<Settings>('/parametres') });
     const [form, setForm] = useState<Settings | null>(null);
+    const [dirty, setDirty] = useState(false);
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [busy, setBusy] = useState(false);
-    useEffect(() => { if (query.data && !form) setForm(query.data); }, [query.data]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Values saved on another device replace the form until something is typed here.
+    useEffect(() => { if (query.data && !dirty) setForm(query.data); }, [query.data]); // eslint-disable-line react-hooks/exhaustive-deps
 
     if (!form) return <div className="grid h-60 place-items-center"><span className="spinner size-6 text-brand" /></div>;
-    const set = (k: keyof Settings, v: string) => setForm({ ...form, [k]: v });
+    const set = (k: keyof Settings, v: string) => { setDirty(true); setForm({ ...form, [k]: v }); };
 
     const submit = async () => {
         setBusy(true);
         setErrors({});
         try {
             setForm(await api<Settings>('/parametres', { method: 'PUT', body: form }));
+            setDirty(false);
             toast.success(t('spa.ui.enregistre'));
             // Company name and currency appear everywhere: reload the session words.
             void queryClient.invalidateQueries();
@@ -255,14 +264,14 @@ export function ParametresPage() {
             <PageHeader title={t('setting.plural')} />
             <Section>
                 <form className="grid gap-4 p-4 sm:grid-cols-2" onSubmit={(e) => { e.preventDefault(); void submit(); }}>
-                    <TextField label="Société / الشركة" value={form.societe_nom} onChange={(v) => set('societe_nom', v)} error={errors.societe_nom} />
-                    <TextField label="Téléphone / الهاتف" value={form.societe_telephone} onChange={(v) => set('societe_telephone', v)} error={errors.societe_telephone} dir="ltr" />
-                    <TextArea className="sm:col-span-2" label="Adresse / العنوان" value={form.societe_adresse} onChange={(v) => set('societe_adresse', v)} error={errors.societe_adresse} />
-                    <TextField label="Email" type="email" value={form.societe_email} onChange={(v) => set('societe_email', v)} error={errors.societe_email} dir="ltr" />
-                    <TextField label="ICE" value={form.societe_ice} onChange={(v) => set('societe_ice', v)} error={errors.societe_ice} dir="ltr" />
-                    <TextField label="RC" value={form.societe_rc} onChange={(v) => set('societe_rc', v)} error={errors.societe_rc} dir="ltr" />
-                    <TextField label="Devise / العملة" value={form.devise} onChange={(v) => set('devise', v)} error={errors.devise} />
-                    <TextField label="TVA % / الضريبة" value={form.tva_defaut === null ? '' : String(form.tva_defaut)} onChange={(v) => set('tva_defaut', v)} error={errors.tva_defaut} inputMode="decimal" suffix="%" />
+                    <TextField label={t('setting.societe')} value={form.societe_nom} onChange={(v) => set('societe_nom', v)} error={errors.societe_nom} />
+                    <TextField label={t('client.telephone')} value={form.societe_telephone} onChange={(v) => set('societe_telephone', v)} error={errors.societe_telephone} dir="ltr" />
+                    <TextArea className="sm:col-span-2" label={t('client.adresse')} value={form.societe_adresse} onChange={(v) => set('societe_adresse', v)} error={errors.societe_adresse} />
+                    <TextField label={t('client.email')} type="email" value={form.societe_email} onChange={(v) => set('societe_email', v)} error={errors.societe_email} dir="ltr" />
+                    <TextField label={t('client.ice')} value={form.societe_ice} onChange={(v) => set('societe_ice', v)} error={errors.societe_ice} dir="ltr" />
+                    <TextField label={t('client.rc')} value={form.societe_rc} onChange={(v) => set('societe_rc', v)} error={errors.societe_rc} dir="ltr" />
+                    <TextField label={t('setting.devise')} value={form.devise} onChange={(v) => set('devise', v)} error={errors.devise} />
+                    <TextField label={t('setting.tva_defaut')} value={form.tva_defaut === null ? '' : String(form.tva_defaut)} onChange={(v) => set('tva_defaut', v)} error={errors.tva_defaut} inputMode="decimal" suffix="%" />
                     <div className="flex justify-end sm:col-span-2">
                         <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? <span className="spinner size-4" /> : <Save />}{t('spa.ui.enregistrer')}</button>
                     </div>

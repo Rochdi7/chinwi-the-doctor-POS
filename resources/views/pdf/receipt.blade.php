@@ -114,12 +114,12 @@
     </tr>
     <tr>
         <td>{{ $t('mode') }}</td>
-        <td class="num">{{ __('app.mode.'.$payment->mode) }}</td>
+        <td style="text-align: {{ $opposite }}">{{ __('app.mode.'.$payment->mode) }}</td>
     </tr>
     @if($payment->reference)
         <tr>
             <td>{{ $t('reference') }}</td>
-            <td class="num">{{ $payment->reference }}</td>
+            <td style="text-align: {{ $opposite }}"><span class="ltr">{{ $payment->reference }}</span></td>
         </tr>
     @endif
     @if($invoice)
