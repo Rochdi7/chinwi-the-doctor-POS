@@ -326,4 +326,37 @@ return [
         'indispo' => 'Ce navigateur ne sait pas lire les codes-barres. Utilisez Safari (iPhone) ou Chrome (Android) à jour.',
         'derniers' => 'Derniers scans',
     ],
+    // Words only the React app uses (resources/react).
+    'spa' => [
+        'auth' => [
+            'titre' => 'Connexion',
+            'sous_titre' => 'Connectez-vous pour ouvrir la caisse',
+            'email' => 'Adresse e-mail',
+            'password' => 'Mot de passe',
+            'se_souvenir' => 'Se souvenir de moi',
+            'connexion' => 'Se connecter',
+            'deconnexion' => 'Se déconnecter',
+            'echec' => 'Adresse e-mail ou mot de passe incorrect.',
+            'trop' => 'Trop de tentatives. Réessayez dans une minute.',
+        ],
+        'erreur' => [
+            'reseau' => 'Connexion au serveur impossible.',
+            'validation' => 'Veuillez vérifier les informations.',
+            'serveur' => 'Une erreur est survenue. Réessayez.',
+            'doublon' => 'Cette vente est déjà en cours d’enregistrement.',
+            'session' => 'Session expirée. Reconnectez-vous.',
+        ],
+        'pos' => [
+            'tous' => 'Tous',
+            'panier_vide_titre' => 'Panier vide',
+            'paiement' => 'Paiement',
+            'traitement' => 'Traitement…',
+            'ancienne_caisse' => 'Ancienne caisse',
+            'gestion' => 'Gestion',
+            'langue' => 'Langue',
+            'raccourcis' => 'F2 rechercher · F9 encaisser · Échap effacer',
+            'calcul' => 'Calcul…',
+            'chargement' => 'Chargement…',
+        ],
+    ],
 ];
