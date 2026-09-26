@@ -57,7 +57,7 @@ function kindFor(status: number): ApiErrorKind {
     }
 }
 
-export async function api<T>(path: string, options: RequestOptions = {}): Promise<T> {
+export async function api<T>(path: string, options: RequestOptions = {}, retried = false): Promise<T> {
     const url = new URL('/api' + path, window.location.origin);
 
     for (const [key, value] of Object.entries(options.query ?? {})) {
@@ -93,6 +93,13 @@ export async function api<T>(path: string, options: RequestOptions = {}): Promis
     const data: unknown = await response.json().catch(() => null);
 
     if (response.ok) return data as T;
+
+    // A page left open across a deploy or a session purge holds a dead token:
+    // any response hands out a fresh XSRF cookie, so fetch one and try once more.
+    if (response.status === 419 && !retried) {
+        await fetch(new URL('/api/session', window.location.origin), { credentials: 'same-origin', headers: { Accept: 'application/json' } }).catch(() => null);
+        return api<T>(path, options, true);
+    }
 
     const body = (data ?? {}) as { message?: string; errors?: Record<string, string[]> };
     const kind = kindFor(response.status);
