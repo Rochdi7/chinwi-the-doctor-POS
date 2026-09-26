@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\SyncController;
 use App\Http\Controllers\ArticleLabelController;
 use App\Http\Controllers\BarcodeController;
 use App\Http\Controllers\InvoicePdfController;
+use App\Http\Controllers\InvoiceReceiptController;
 use App\Http\Controllers\PaymentReceiptController;
 use App\Support\Locales;
 use Illuminate\Support\Facades\Route;
@@ -95,6 +96,7 @@ Route::view('/app/{any?}', 'react')->where('any', '.*')->name('react');
 
 Route::middleware('auth')->group(function () {
     Route::get('/facture/{invoice}/pdf', InvoicePdfController::class)->name('invoice.pdf');
+    Route::get('/facture/{invoice}/recu', InvoiceReceiptController::class)->name('invoice.receipt');
     Route::get('/reglement/{payment}/pdf', PaymentReceiptController::class)->name('payment.pdf');
     Route::get('/article/{article}/code-barre', BarcodeController::class)->name('article.barcode');
     Route::get('/article/{article}/etiquette', ArticleLabelController::class)->name('article.label');

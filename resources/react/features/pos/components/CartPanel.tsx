@@ -1,5 +1,5 @@
 import { useMemo, type RefObject } from 'react';
-import { Banknote, CreditCard, ReceiptText, TriangleAlert, UserRound, ScanBarcode } from 'lucide-react';
+import { Banknote, CreditCard, ReceiptText, TriangleAlert, UserRound, ScanBarcode, X } from 'lucide-react';
 import { useSession, useT } from '@/auth/session';
 import { Combobox } from '@/components/ui/Combobox';
 import { formatMoney, formatQty } from '@/lib/format';
@@ -12,6 +12,9 @@ interface Props {
     apercuStale: boolean;
     clients: ClientOption[];
     amountBox: RefObject<HTMLInputElement | null>;
+    /** Set when the panel sits in the bottom sheet: shows a close button. */
+    onClose?: () => void;
+    className?: string;
 }
 
 /**
@@ -33,7 +36,7 @@ function quickAmounts(total: number): number[] {
  * The order being built: customer, lines, totals and the cash handed over.
  * Encaisser / Enregistrer live in the action bar under the screen.
  */
-export function CartPanel({ apercu, apercuStale, clients, amountBox }: Props) {
+export function CartPanel({ apercu, apercuStale, clients, amountBox, onClose, className = '' }: Props) {
     const t = useT();
     const { devise } = useSession();
     const lines = usePos((s) => s.lines);
@@ -57,7 +60,7 @@ export function CartPanel({ apercu, apercuStale, clients, amountBox }: Props) {
     ];
 
     return (
-        <aside className="panel flex min-h-0 flex-col overflow-hidden rounded-2xl">
+        <aside className={`panel flex min-h-0 flex-col overflow-hidden rounded-2xl ${className}`}>
             {/* ---- Header ---- */}
             <div className="flex items-center justify-between gap-2 px-4 pt-3 pb-2 short:pt-2">
                 <h2 className="flex items-center gap-2 text-lg font-extrabold">
@@ -67,6 +70,11 @@ export function CartPanel({ apercu, apercuStale, clients, amountBox }: Props) {
                         {formatQty(count)}
                     </span>
                 </h2>
+                {onClose && (
+                    <button type="button" className="btn btn-ghost -me-2 min-h-9 px-2" onClick={onClose} aria-label={t('spa.ui.fermer')}>
+                        <X />
+                    </button>
+                )}
             </div>
 
             {/* ---- Customer & payment mode ---- */}
@@ -104,10 +112,10 @@ export function CartPanel({ apercu, apercuStale, clients, amountBox }: Props) {
             </div>
 
             {/* ---- Lines ---- */}
-            <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_6.5rem] gap-x-2 border-y border-line bg-surface-2 px-3 py-1.5 text-[0.7rem] font-bold tracking-wide text-ink-3 uppercase rtl:text-xs rtl:tracking-normal rtl:normal-case">
+            <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_5rem] gap-x-2 border-y border-line bg-surface-2 px-3 py-1.5 text-[0.7rem] font-bold tracking-wide text-ink-3 uppercase rtl:text-xs rtl:tracking-normal rtl:normal-case sm:grid-cols-[auto_minmax(0,1fr)_auto_6.5rem]">
                 <span className="w-8" />
                 <span>{t('item.article')}</span>
-                <span className="w-24 text-center">{t('item.quantite')}</span>
+                <span className="w-26 text-center lg:w-24">{t('item.quantite')}</span>
                 <span className="text-end">{t('item.total_ttc')}</span>
             </div>
             <div className="min-h-24 flex-1 overflow-y-auto">

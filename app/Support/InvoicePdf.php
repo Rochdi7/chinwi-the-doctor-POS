@@ -39,14 +39,33 @@ class InvoicePdf
      */
     public static function receipt(Payment $payment): array
     {
-        $payment->loadMissing(['client', 'invoice.items']);
+        $payment->loadMissing(['client', 'user', 'invoice.items']);
 
         return self::build(
             frenchView: 'pdf.receipt',
             arabicView: 'pdf.receipt',
             data: ['payment' => $payment] + self::common(),
             filename: 'recu-'.$payment->id.'.pdf',
-            paper: [self::ROLL_WIDTH, self::receiptHeight($payment)],
+            // The payment block (amount, mode, optional reference) is about two payment lines tall.
+            paper: [self::ROLL_WIDTH, self::receiptHeight($payment, $payment->reference ? 3 : 2)],
+        );
+    }
+
+    /**
+     * Receipt for a whole sale, on the same 80mm roll: the articles, the
+     * total, every payment made so far and what is still owed. Served as a
+     * download from the sales list.
+     */
+    public static function saleReceipt(Invoice $invoice): array
+    {
+        $invoice->loadMissing(['client', 'items', 'payments', 'user']);
+
+        return self::build(
+            frenchView: 'pdf.receipt',
+            arabicView: 'pdf.receipt',
+            data: ['payment' => null, 'invoice' => $invoice] + self::common(),
+            filename: 'recu-'.$invoice->numero.'.pdf',
+            paper: [self::ROLL_WIDTH, self::receiptHeight($invoice, $invoice->payments->count())],
         );
     }
 
@@ -55,16 +74,21 @@ class InvoicePdf
      * a fixed block for the header, totals and payment lines, plus one
      * detail line per article and one line per ~30 characters of its name.
      */
-    private static function receiptHeight(Payment $payment): float
+    private static function receiptHeight(Payment|Invoice $source, int $paymentLines = 0): float
     {
-        $height = 90;
+        $invoice = $source instanceof Payment ? $source->invoice : $source;
+        // DejaVu Sans (dompdf, French) runs taller than Tajawal (mPDF, Arabic).
+        $height = (Locales::isArabicScript() ? 100 : 106) + 4.5 * $paymentLines;
 
-        foreach ($payment->invoice?->items ?? [] as $item) {
+        foreach ($invoice?->items ?? [] as $item) {
             $height += 4 + 4.5 * max(1, (int) ceil(mb_strlen((string) $item->designation) / 30));
         }
 
+        // Header lines that only show when set.
         $height += 4 * substr_count((string) Setting::get('societe_adresse'), "
 ");
+        $height += Setting::get('societe_telephone') ? 4 : 0;
+        $height += Setting::get('societe_ice') ? 4 : 0;
 
         return $height;
     }

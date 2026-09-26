@@ -22,6 +22,8 @@ interface Props {
     'aria-label'?: string;
     /** Compact: a filter in a toolbar rather than a form field. */
     size?: 'md' | 'sm';
+    /** On a phone, only the icon of the chosen option shows (the header bar). */
+    compactLabel?: boolean;
     invalid?: boolean;
 }
 
@@ -31,7 +33,7 @@ interface Props {
  * search box once there are more than a few choices, arrow keys, Enter,
  * Escape. Opens upward when there is no room below.
  */
-export function Combobox({ value, onChange, options, placeholder = '—', clearable = false, disabled, icon, className = '', id, size = 'md', invalid, ...rest }: Props) {
+export function Combobox({ value, onChange, options, placeholder = '—', clearable = false, disabled, icon, className = '', id, size = 'md', invalid, compactLabel = false, ...rest }: Props) {
     const t = useT();
     const autoId = useId();
     const buttonId = id ?? autoId;
@@ -116,13 +118,13 @@ export function Combobox({ value, onChange, options, placeholder = '—', cleara
                 className={`field flex ${h} items-center gap-2 text-start ${invalid ? 'border-bad' : ''} ${open ? 'border-brand ring-3 ring-brand/20' : ''} ${className}`}
             >
                 {(selected?.icon ?? icon) && <span className="flex-none text-ink-3">{selected?.icon ?? icon}</span>}
-                <span className={`min-w-0 flex-1 truncate ${selected ? 'font-semibold' : 'text-ink-3'}`}>{selected?.label ?? placeholder}</span>
+                <span className={`min-w-0 flex-1 truncate ${selected ? 'font-semibold' : 'text-ink-3'} ${compactLabel ? 'hidden sm:inline' : ''}`}>{selected?.label ?? placeholder}</span>
                 {clearable && selected ? (
                     <span role="button" aria-label="×" className="grid size-6 flex-none place-items-center rounded-full text-ink-3 hover:bg-line hover:text-ink" onClick={(e) => { e.stopPropagation(); choose(''); }}>
                         <X className="size-3.5" />
                     </span>
                 ) : (
-                    <ChevronDown className={`size-4 flex-none text-ink-3 transition-transform ${open ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`size-4 flex-none text-ink-3 transition-transform ${open ? 'rotate-180' : ''} ${compactLabel ? 'hidden sm:block' : ''}`} />
                 )}
             </button>
 

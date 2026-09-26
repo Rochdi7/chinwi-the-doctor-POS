@@ -16,6 +16,7 @@ export function LanguageSwitch({ compact = false }: { compact?: boolean }) {
         <Combobox
             size="sm"
             className={compact ? 'w-auto' : ''}
+            compactLabel={compact}
             value={locale}
             disabled={busy}
             aria-label={t('spa.pos.langue')}

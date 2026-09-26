@@ -53,11 +53,10 @@ function RequireAuth({ children }: { children: ReactNode }) {
     return user ? children : <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
 }
 
+/** Logged in: straight to the till, whoever the user is and wherever they came from. */
 function GuestOnly({ children }: { children: ReactNode }) {
     const { user } = useSession();
-    const location = useLocation();
-    const from = (location.state as { from?: string } | null)?.from;
-    return user ? <Navigate to={from && from !== '/login' ? from : '/pos'} replace /> : children;
+    return user ? <Navigate to="/pos" replace /> : children;
 }
 
 const loading = (

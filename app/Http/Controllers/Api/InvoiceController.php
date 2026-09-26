@@ -204,6 +204,7 @@ class InvoiceController extends Controller
             'montant_paye' => (float) $i->montant_paye,
             'reste' => max($i->reste(), 0),
             'pdf_url' => route('invoice.pdf', $i),
+            'recu_url' => route('invoice.receipt', $i),
         ];
     }
 }

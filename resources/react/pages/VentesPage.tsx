@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Plus, Printer, Pencil, ArrowLeft, Banknote, CreditCard, Trash2, ShoppingCart } from 'lucide-react';
+import { Plus, Printer, Pencil, ArrowLeft, Banknote, CreditCard, Trash2, ShoppingCart, Download } from 'lucide-react';
 import { useSession, useT } from '@/auth/session';
 import { api, ApiError, errorMessage } from '@/lib/api';
 import { useListParams } from '@/lib/useListParams';
@@ -41,6 +41,8 @@ export default function VentesPage() {
             cell: (i) => (
                 <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
                     {i.reste > 0 && <button className="btn btn-secondary min-h-9 border-warn/40 px-2.5 text-sm text-warn-ink" onClick={() => setPaying(i)}><Banknote />{t('invoice.encaisser')}</button>}
+                    {/* The thermal receipt of the sale, saved as a file (the server answers with Content-Disposition: attachment). */}
+                    <a className="btn btn-secondary min-h-9 px-2.5 text-sm" href={i.recu_url} download title={t('receipt.telecharger')}><Download />{t('receipt.telecharger')}</a>
                     <a className="btn btn-ghost min-h-9 px-2.5" href={i.pdf_url} target="_blank" rel="noopener" title={t('invoice.print')}><Printer /></a>
                 </div>
             ),
@@ -154,6 +156,7 @@ export function VenteDetailPage() {
                 actions={
                     <>
                         {v.reste > 0 && <button className="btn btn-success" onClick={() => setPaying(true)}><Banknote />{t('invoice.encaisser')}</button>}
+                        <a className="btn btn-primary" href={v.recu_url} download><Download />{t('receipt.telecharger')}</a>
                         <a className="btn btn-secondary" href={v.pdf_url} target="_blank" rel="noopener"><Printer />{t('invoice.print')}</a>
                         <Link to={`/ventes/${v.id}/modifier`} className="btn btn-secondary"><Pencil />{t('spa.ui.modifier')}</Link>
                         <DeleteButton label={v.numero} onConfirm={async () => {

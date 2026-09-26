@@ -13,7 +13,7 @@ interface Props {
     flash: boolean;
 }
 
-const stepBtn = 'grid size-7 flex-none place-items-center rounded-full bg-surface-2 text-ink transition-colors hover:bg-brand-soft hover:text-brand active:bg-brand active:text-white';
+const stepBtn = 'grid size-8 lg:size-7 flex-none place-items-center rounded-full bg-surface-2 text-ink transition-colors hover:bg-brand-soft hover:text-brand active:bg-brand active:text-white';
 
 /** One order row: remove, name with unit price, − quantity +, line total. */
 export const CartLine = memo(function CartLine({ line, priced, stale, flash }: Props) {
@@ -36,7 +36,7 @@ export const CartLine = memo(function CartLine({ line, priced, stale, flash }: P
     const unit = priced && priced.quantite > 0 ? priced.total_ttc / priced.quantite : line.prix_vente;
 
     return (
-        <li className={`grid grid-cols-[auto_minmax(0,1fr)_auto_6.5rem] items-center gap-x-2 border-b border-line px-3 py-2 short:py-1.5 ${flash ? 'animate-flash' : ''}`}>
+        <li className={`grid grid-cols-[auto_minmax(0,1fr)_auto_5rem] items-center gap-x-2 border-b border-line px-3 py-2 short:py-1.5 sm:grid-cols-[auto_minmax(0,1fr)_auto_6.5rem] ${flash ? 'animate-flash' : ''}`}>
             {/* Small and away from the stepper, so it is not hit by accident. */}
             <button
                 type="button"

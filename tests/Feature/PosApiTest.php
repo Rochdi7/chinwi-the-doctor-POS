@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Article;
 use App\Models\Caisse;
+use App\Models\CaisseMouvement;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\User;
@@ -182,7 +183,7 @@ class PosApiTest extends TestCase
         $article = $this->article(['prix_vente' => 10, 'tva' => 0]);
         $this->actingAs($this->user);
 
-        $this->getJson('/api/pos/journee')->assertOk()->assertJsonPath('ventes', 0)->assertJsonPath('especes', 0);
+        $this->getJson('/api/pos/journee')->assertOk()->assertJsonPath('ventes', 0)->assertJsonPath('especes', 0)->assertJsonPath('caisse', 0);
 
         foreach ([['especes', 1], ['tpe', 2]] as [$mode, $qty]) {
             $this->postJson('/api/pos/ventes', ['items' => [['article_id' => $article->id, 'quantite' => $qty]], 'mode' => $mode, 'encaisser' => true, 'cle' => (string) Str::uuid()])->assertCreated();
@@ -191,7 +192,18 @@ class PosApiTest extends TestCase
         $this->getJson('/api/pos/journee')->assertOk()
             ->assertJsonPath('ventes', 2)
             ->assertJsonPath('total', 30)
-            ->assertJsonPath('especes', 10);
+            ->assertJsonPath('especes', 10)
+            ->assertJsonPath('caisse', 10);
+
+        // The drawer total follows the cash book: a manual cash-out today
+        // counts, yesterday's movements do not.
+        Caisse::mouvement('sortie', 4, 'Achat sacs');
+        CaisseMouvement::create([
+            'type' => 'entree', 'montant' => 100, 'solde_avant' => 0, 'solde_apres' => 100,
+            'motif' => 'Hier', 'occurred_at' => now()->subDay()->format('Y-m-d H:i:s.v'),
+        ]);
+
+        $this->getJson('/api/pos/journee')->assertOk()->assertJsonPath('caisse', 6);
     }
 
     public function test_the_same_sale_key_never_sells_twice(): void

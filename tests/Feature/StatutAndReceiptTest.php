@@ -160,6 +160,51 @@ class StatutAndReceiptTest extends TestCase
         $this->assertStringContainsString('1 000,00', $text, 'invoice total for context');
     }
 
+    public function test_sale_receipt_downloads_and_lists_every_payment(): void
+    {
+        $invoice = $this->invoiceOf(1000);
+        $this->pay($invoice, 300);
+        $this->pay($invoice, 200);
+
+        $response = $this->get(route('invoice.receipt', $invoice));
+        $response->assertOk();
+        $this->assertSame('application/pdf', $response->headers->get('content-type'));
+        $this->assertStringStartsWith('attachment;', (string) $response->headers->get('content-disposition'), 'saved as a file, not opened');
+
+        $html = view('pdf.receipt', [
+            'payment' => null,
+            'invoice' => $invoice->fresh()->load(['client', 'items', 'payments']),
+            'societe' => ['nom' => 'MA SOCIETE', 'adresse' => '', 'telephone' => '', 'email' => '', 'ice' => '', 'rc' => ''],
+            'devise' => 'DH',
+        ])->render();
+
+        $text = preg_replace('/\s+/', ' ', strip_tags($html));
+
+        $this->assertStringContainsString(__('app.receipt.titre_vente'), $text);
+        $this->assertStringContainsString('300,00', $text, 'first payment');
+        $this->assertStringContainsString('200,00', $text, 'second payment');
+        $this->assertStringContainsString('500,00', $text, 'total paid');
+        $this->assertStringContainsString('1 000,00', $text, 'sale total');
+        $this->assertStringNotContainsString(__('app.receipt.solde'), $text, '500 still owed');
+    }
+
+    public function test_sale_receipt_without_any_payment(): void
+    {
+        $invoice = $this->invoiceOf(250);
+
+        $html = view('pdf.receipt', [
+            'payment' => null,
+            'invoice' => $invoice->load(['client', 'items', 'payments']),
+            'societe' => ['nom' => 'MA SOCIETE', 'adresse' => '', 'telephone' => '', 'email' => '', 'ice' => '', 'rc' => ''],
+            'devise' => 'DH',
+        ])->render();
+
+        $text = preg_replace('/\s+/', ' ', strip_tags($html));
+
+        $this->assertStringContainsString(__('app.receipt.aucun_paiement'), $text);
+        $this->assertStringContainsString('250,00', $text, 'everything still owed');
+    }
+
     public function test_receipt_marks_a_fully_settled_invoice(): void
     {
         $invoice = $this->invoiceOf(1000);

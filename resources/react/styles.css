@@ -80,6 +80,7 @@
     --animate-pop: pop 260ms ease-out;
     --animate-flash: flash 500ms ease-out;
     --animate-rise: rise 160ms ease-out;
+    --animate-sheet: sheet 220ms ease-out;
 
     @keyframes pop {
         0% { box-shadow: 0 0 0 0 rgb(29 78 216 / 0.35); }
@@ -93,6 +94,16 @@
         from { opacity: 0; transform: translateY(4px); }
         to { opacity: 1; transform: none; }
     }
+    @keyframes sheet {
+        from { opacity: 0.6; transform: translateY(24px); }
+        to { opacity: 1; transform: none; }
+    }
+}
+
+/* A row that swipes sideways on a touch screen: no scrollbar under it. */
+@utility scrollbar-none {
+    scrollbar-width: none;
+    &::-webkit-scrollbar { display: none; }
 }
 
 html, body, #root { height: 100%; }

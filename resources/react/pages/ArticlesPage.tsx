@@ -165,7 +165,7 @@ function ArticleForm({ article, prefill, onClose }: { article: ArticleRow | null
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [newCat, setNewCat] = useState<string | null>(null);
     const [more, setMore] = useState(false);
-    const [photo, setPhoto] = useState<{ pending: PreparedImage | null; removed: boolean; busy: boolean; removeBg: boolean }>({ pending: null, removed: false, busy: false, removeBg: true });
+    const [photo, setPhoto] = useState<{ pending: PreparedImage | null; removed: boolean; busy: boolean }>({ pending: null, removed: false, busy: false });
 
     // Defaults come from the server: next reference, a fresh EAN-13, VAT.
     const init = useQuery<FormSource>({
@@ -266,14 +266,11 @@ function ArticleForm({ article, prefill, onClose }: { article: ArticleRow | null
                     <PhotoField
                         current={photo.removed ? null : (photo.pending?.previewUrl ?? article?.image_url ?? null)}
                         busy={photo.busy}
-                        removeBg={photo.removeBg}
-                        onToggleBg={(v) => setPhoto((p) => ({ ...p, removeBg: v }))}
                         onFile={async (file) => {
                             setPhoto((p) => ({ ...p, busy: true }));
                             try {
-                                const pending = await prepareProductImage(file, photo.removeBg);
+                                const pending = await prepareProductImage(file);
                                 setPhoto((p) => ({ ...p, pending, removed: false, busy: false }));
-                                if (pending.bgRemoved === false) toast.warning(t('spa.ui.photo_fond_non_retire'));
                             } catch {
                                 toast.error(t('spa.ui.photo_erreur'));
                                 setPhoto((p) => ({ ...p, busy: false }));
@@ -351,8 +348,8 @@ function ArticleForm({ article, prefill, onClose }: { article: ArticleRow | null
     );
 }
 
-/** The product photo: pick (or take) one, see it cut out, or remove it. */
-function PhotoField({ current, busy, removeBg, onToggleBg, onFile, onRemove }: { current: string | null; busy: boolean; removeBg: boolean; onToggleBg: (v: boolean) => void; onFile: (f: File) => void; onRemove: () => void }) {
+/** The product photo: pick (or take) one, see it, or remove it. */
+function PhotoField({ current, busy, onFile, onRemove }: { current: string | null; busy: boolean; onFile: (f: File) => void; onRemove: () => void }) {
     const t = useT();
     const inputId = 'photo-' + Math.random().toString(36).slice(2, 8);
     const [webcam, setWebcam] = useState(false);
@@ -382,10 +379,6 @@ function PhotoField({ current, busy, removeBg, onToggleBg, onFile, onRemove }: {
                             </button>
                         )}
                     </div>
-                    <label className="flex items-center gap-2 text-sm text-ink-2">
-                        <input type="checkbox" className="size-4 accent-brand" checked={removeBg} onChange={(e) => onToggleBg(e.target.checked)} />
-                        {t('spa.ui.enlever_fond')}
-                    </label>
                     <p className="text-xs text-ink-3">{busy ? t('spa.ui.photo_traitement') : t('spa.ui.photo_aide')}</p>
                 </div>
             </div>

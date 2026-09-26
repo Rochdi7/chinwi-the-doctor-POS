@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Pos\ApercuRequest;
 use App\Http\Requests\Pos\VenteRequest;
 use App\Models\Article;
+use App\Models\CaisseMouvement;
 use App\Models\Category;
 use App\Models\Client;
 use App\Models\Invoice;
@@ -168,6 +169,7 @@ class PosController extends Controller
                 'montant_paye' => (float) $invoice->montant_paye,
                 'statut' => $invoice->statut,
                 'pdf_url' => route('invoice.pdf', $invoice),
+                'recu_url' => route('invoice.receipt', $invoice),
             ],
             'payment' => $payment ? [
                 'id' => $payment->id,
@@ -181,16 +183,25 @@ class PosController extends Controller
 
     /**
      * Today at this till: sales, what was invoiced and what cash came in.
-     * Shown in the header and refreshed after each sale.
+     * `caisse` is the drawer's net for the day as the cash book records it
+     * (every entree minus every sortie, manual ones and reversals included),
+     * so it matches the Caisse page. Shown in the header and refreshed after
+     * each sale.
      */
     public function journee(): JsonResponse
     {
         $today = now()->toDateString();
 
+        $caisse = CaisseMouvement::query()
+            ->whereDate('occurred_at', $today)
+            ->selectRaw("COALESCE(SUM(CASE WHEN type = 'entree' THEN montant ELSE -montant END), 0) AS net")
+            ->value('net');
+
         return response()->json([
             'ventes' => Invoice::query()->whereDate('date_facture', $today)->count(),
             'total' => (float) Invoice::query()->whereDate('date_facture', $today)->sum('total_ttc'),
             'especes' => (float) Payment::query()->whereDate('date_paiement', $today)->where('mode', 'especes')->sum('montant'),
+            'caisse' => round((float) $caisse, 2),
         ]);
     }
 

@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { CheckCircle2, FileText, Printer, ArrowRight } from 'lucide-react';
+import { CheckCircle2, FileText, Printer, ArrowRight, Download } from 'lucide-react';
 import { useSession, useT } from '@/auth/session';
 import { Dialog } from '@/components/ui/Dialog';
 import { formatMoney } from '@/lib/format';
@@ -56,6 +56,11 @@ export function SaleDoneDialog({ result, onClose }: { result: VenteResult | null
                                 {t('receipt.print')}
                             </button>
                         )}
+                        {/* Saved as a file rather than opened: the till may have no PDF viewer. */}
+                        <a className="btn btn-secondary w-full" href={result.invoice.recu_url} download onClick={() => next.current?.focus()}>
+                            <Download />
+                            {t('receipt.telecharger')}
+                        </a>
                         <button className="btn btn-secondary w-full" onClick={() => open(result.invoice.pdf_url)}>
                             <FileText />
                             {t('invoice.print')} · {t('invoice.label')}

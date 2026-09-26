@@ -64,6 +64,8 @@ export interface PosJournee {
     ventes: number;
     total: number;
     especes: number;
+    /** Net cash into the drawer today (cash book entrees minus sorties). */
+    caisse: number;
 }
 
 export interface PosInit {
@@ -154,6 +156,7 @@ export interface VenteResult {
         montant_paye: number;
         statut: InvoiceStatut;
         pdf_url: string;
+        recu_url: string;
     };
     payment: {
         id: number;
@@ -240,6 +243,8 @@ export interface InvoiceRow {
     montant_paye: number;
     reste: number;
     pdf_url: string;
+    /** Thermal receipt for the whole sale, served as a download. */
+    recu_url: string;
 }
 
 export interface InvoiceLine {
